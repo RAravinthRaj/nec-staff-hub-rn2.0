@@ -1,0 +1,73 @@
+/* 
+© 2025 Aravinth Raj R. All rights reserved.
+Unauthorized copying of this file, via any medium, is strictly prohibited.
+Proprietary and confidential.  
+Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
+*/
+export const OA_HOME_CONFIG = {
+  greet: "Welcome Back,",
+  userName: "Aravinth",
+  waveSign: "👋",
+  requiredMark: "*",
+  mode: "Mode",
+  department: "Department",
+  year: "Year",
+  period: "Period",
+  statusFilter: "Status Filter",
+  modes: [
+    { label: "Single Day", value: "DAY" },
+    { label: "Date Range", value: "RANGE" },
+    { label: "Period", value: "PERIOD" },
+  ],
+  statusOptions: [
+    { label: "All", value: "" },
+    { label: "Present", value: "present" },
+    { label: "Absent", value: "absent" },
+    { label: "OD", value: "onDuty" },
+    { label: "Mixed", value: "mixed" },
+  ],
+  present: "P",
+  absent: "A",
+  onDuty: "OD",
+  mixed: "Mixed",
+  startDate: "Start Date",
+  endDate: "End Date",
+  roll: "Roll",
+  number: "Number",
+  name: "Name",
+  status: "Status",
+  students: "Students",
+  searchPlaceholder: "Search name, roll no...",
+  selectPlaceholder: "-- Select --",
+  all: "All",
+  rangeSummary: "Range Summary",
+  rangeSummaryTemplate: "P:{present} A:{absent} OD:{od}",
+  markAllPresent: "Mark All Present",
+  markAllAbsent: "Mark All Absent",
+  markAllOd: "Mark All OD",
+  applyButtonTitle: "Apply Filters",
+  buttonTitle: "Save Attendance",
+  loading: "Loading...",
+  saving: "Saving...",
+  previous: "Previous",
+  next: "Next",
+  page: "Page",
+  modalTitle: "Attendance Actions",
+  modalSubTitle: "Apply to all students",
+  noDataTitle: "No Data Found.",
+  filterNoDataTitle: "No filtered attendance found.",
+  export: "Export",
+  exportQueuedMessage:
+    "Attendance export is being prepared and will be emailed shortly.",
+  reportViewError: "Report view supports only day or range mode.",
+  selectDepartmentYearError: "Please select department and year.",
+  selectPeriodError: "Please select a period.",
+  metaLoadError: "Failed to load OA attendance filters.",
+  fetchStudentsError: "Failed to fetch students.",
+  noConcreteStatusInfo: "No concrete student status found to save.",
+  saveAttendanceSuccess:
+    "Saved attendance for {students} student(s) across {dates} day(s).",
+  saveAttendanceError: "Failed to save OA attendance.",
+  saveAttendanceServerSqlError:
+    "OA attendance could not be saved because the server returned an invalid SQL query. Please fix the backend saveOAAttendance query.",
+};
