@@ -13,7 +13,7 @@ export const getProfile = async () => {
     const token = await getItemInLocalStorage("token");
 
     if (token && token.length > 0) {
-      const { data } = await apolloClient.query({
+      const { data } = await apolloClient.query<any>({
         query: GET_PROFILE,
         fetchPolicy: "no-cache",
         context: {

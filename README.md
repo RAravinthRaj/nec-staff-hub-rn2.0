@@ -1,14 +1,4 @@
-# NEC Staff Hub: Client Workflow Demo
-
-⚠️ Important Deployment Note
-
-The backend for this application is deployed on a free-tier service using Render. Due to limitations of the free tier:
-
-Email services (including OTP delivery) are not supported
-OTPs will be displayed directly in the app via toast notifications instead of being sent via email
-All other email-based functionalities are disabled or blocked by the server
-
-This behavior is only for demo/testing purposes and does not reflect production functionality.
+# NEC Staff Hub: Client Workflow
 
 ## 1. Purpose
 

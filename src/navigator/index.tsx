@@ -5,16 +5,20 @@ Proprietary and confidential.
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 
-import React, { useState } from "react";
+import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { useThemeMode } from "@/hooks";
+import { useAuthStore } from "@/store/useAuthStore";
 
 import {
   LandingScreen,
   LoginScreen,
   OtpScreen,
+  AttendanceScreen,
+  NotificationScreen,
+  OAFilterScreen,
 } from "@/screens";
 
 import { TabNavigator } from "./TabNavigator";
@@ -23,7 +27,7 @@ const Stack = createNativeStackNavigator();
 
 export const AppNavigator = () => {
   const { theme } = useThemeMode();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, logout } = useAuthStore();
 
   return (
     <NavigationContainer>
@@ -42,7 +46,7 @@ export const AppNavigator = () => {
               {(props) => (
                 <OtpScreen
                   {...props}
-                  onLoginSuccess={() => setIsLoggedIn(true)}
+                  onLoginSuccess={() => {}}
                 />
               )}
             </Stack.Screen>
@@ -53,10 +57,13 @@ export const AppNavigator = () => {
               {(props) => (
                 <TabNavigator
                   {...props}
-                  onLogout={() => setIsLoggedIn(false)}
+                  onLogout={logout}
                 />
               )}
             </Stack.Screen>
+            <Stack.Screen name="Attendance" component={AttendanceScreen} />
+            <Stack.Screen name="Notification" component={NotificationScreen} />
+            <Stack.Screen name="OAFilter" component={OAFilterScreen} />
           </>
         )}
       </Stack.Navigator>

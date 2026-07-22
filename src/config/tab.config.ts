@@ -8,10 +8,10 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 import {
   HomeScreen,
   ProfileScreen,
-  LeaveIntimationScreen,
+  OAHomeScreen,
 } from "@/screens";
 
-export const TAB_CONFIG = [
+export const STAFF_TAB_CONFIG = [
   {
     name: "Home",
     component: HomeScreen,
@@ -21,11 +21,30 @@ export const TAB_CONFIG = [
     },
   },
   {
-    name: "Hod",
-    component: LeaveIntimationScreen,
+    name: "Profile",
+    component: ProfileScreen,
     icon: {
-      focused: { name: "clipboard", type: "entypo" },
-      unfocused: { name: "clipboard", type: "feather" },
+      focused: { name: "person", type: "ionicons" },
+      unfocused: { name: "person-outline", type: "ionicons" },
+    },
+  },
+];
+
+export const HOD_TAB_CONFIG = [
+  {
+    name: "Home",
+    component: HomeScreen,
+    icon: {
+      focused: { name: "home", type: "entypo" },
+      unfocused: { name: "home", type: "antdesign" },
+    },
+  },
+  {
+    name: "Admin",
+    component: OAHomeScreen,
+    icon: {
+      focused: { name: "dashboard", type: "material" },
+      unfocused: { name: "dashboard", type: "material" },
     },
   },
   {

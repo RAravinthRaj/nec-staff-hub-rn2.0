@@ -21,7 +21,7 @@ export const getCourseBatchStudents = async (
       throw new Error("Unauthorized");
     }
 
-    const { data } = await apolloClient.query({
+    const { data } = await apolloClient.query<any>({
       query: GET_COURSE_STUDENTS_DETAILS,
       variables: {
         courseBatchId,

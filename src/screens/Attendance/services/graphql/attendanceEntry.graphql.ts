@@ -26,7 +26,7 @@ export const submitAttendanceEntry = async (
       throw new Error("Unauthorized");
     }
 
-    const { data } = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate<any>({
       mutation: ATTENDANCE_ENTRY,
       variables: {
         periodId,

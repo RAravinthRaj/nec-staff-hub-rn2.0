@@ -58,12 +58,12 @@ export const Body = ({
       <View
         style={StyleSheet.flatten([
           S.card,
-          { backgroundColor: theme.colors[item.color] },
+          { backgroundColor: (theme.colors as any)[item.color] },
         ])}
       >
         <View style={StyleSheet.flatten([S.imageContainer])}>
           <Image
-            source={Images[item.image]}
+            source={(Images as any)[item.image]}
             style={StyleSheet.flatten([S.image])}
           />
         </View>

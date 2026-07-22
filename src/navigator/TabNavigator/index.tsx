@@ -7,13 +7,17 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { TAB_CONFIG } from "@/config/tab.config";
+import { STAFF_TAB_CONFIG, HOD_TAB_CONFIG } from "@/config/tab.config";
 import { CustomTabBar } from "../CustomTabBar";
 import { ProfileScreen } from "@/screens";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const Tab = createBottomTabNavigator();
 
 export const TabNavigator = ({ onLogout }: { onLogout?: () => void }) => {
+  const user = useAuthStore((state) => state.user);
+  const tabConfig = user?.role === "HOD" ? HOD_TAB_CONFIG : STAFF_TAB_CONFIG;
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -22,7 +26,7 @@ export const TabNavigator = ({ onLogout }: { onLogout?: () => void }) => {
       }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
-      {TAB_CONFIG.map((tab) =>
+      {tabConfig.map((tab) =>
         tab.name === "Profile" ? (
           <Tab.Screen
             key={tab.name}

@@ -363,18 +363,12 @@ export const Body = ({
   );
 
   const renderModeAndDepartmentFields = () => (
-    <View style={StyleSheet.flatten([S.categoryContainer])}>
+    <View style={StyleSheet.flatten([S.fullWidthField])}>
       {renderDropDownField(
         OA_HOME_CONFIG.mode,
         mode,
         OA_HOME_CONFIG.modes,
         onModeChange,
-      )}
-      {renderDropDownField(
-        OA_HOME_CONFIG.department,
-        department,
-        departments,
-        onDepartmentChange,
       )}
     </View>
   );

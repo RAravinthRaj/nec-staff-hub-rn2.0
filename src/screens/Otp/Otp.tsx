@@ -10,6 +10,7 @@ import { Body } from "./components";
 import { useEffect, useState } from "react";
 import { Keyboard, Platform } from "react-native";
 import { showToast } from "@/utils/toast";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export const OtpScreen = ({ route, onLoginSuccess }: any) => {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -52,6 +53,7 @@ export const OtpScreen = ({ route, onLoginSuccess }: any) => {
 
     setTimeout(() => {
       setLoading(false);
+      useAuthStore.getState().login(email || "staff@nec.edu.in");
       showToast("Login Successful", "success");
       onLoginSuccess?.();
     }, 300);
