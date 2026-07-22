@@ -12,7 +12,7 @@ import Toast, { BaseToastProps } from "react-native-toast-message";
 import { useTheme } from "@rneui/themed";
 import { styles as S } from "./styles";
 
-export const CustomToast = ({ text1, props }: BaseToastProps) => {
+export const CustomToast = ({ text1, props }: any) => {
   const { theme } = useTheme();
   const type = props?.type || "error";
 

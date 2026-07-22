@@ -19,7 +19,7 @@ export const getSchedules = async (day: string) => {
       throw new Error("Unauthorized");
     }
 
-    const { data } = await apolloClient.query({
+    const { data } = await apolloClient.query<any>({
       query: GET_SCHEDULES,
       variables: { day },
       fetchPolicy: "no-cache",

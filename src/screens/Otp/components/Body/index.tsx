@@ -78,7 +78,7 @@ export const Body = ({ email, onVerifyOtp, onResendOtp }: IBody) => {
             pinCodeContainerStyle: [
               S.otpInput,
               { backgroundColor: theme.colors.secondaryBackground },
-            ],
+            ] as any,
             pinCodeTextStyle: {
               color: theme.colors.black,
             },

@@ -10,7 +10,7 @@ export const getNotifications = async (filter?: string) => {
       throw new Error("Unauthorized");
     }
 
-    const { data } = await apolloClient.query({
+    const { data } = await apolloClient.query<any>({
       query: GET_NOTIFICATIONS,
       variables: {
         filter: filter || null,
@@ -64,7 +64,7 @@ export const markNotificationRead = async (notificationId: number) => {
       throw new Error("Unauthorized");
     }
 
-    const { data } = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate<any>({
       mutation: MARK_NOTIFICATION_READ,
       variables: {
         notificationId,

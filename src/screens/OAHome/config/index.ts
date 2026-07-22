@@ -61,6 +61,7 @@ export const OA_HOME_CONFIG = {
     "Attendance export is being prepared and will be emailed shortly.",
   reportViewError: "Report view supports only day or range mode.",
   selectDepartmentYearError: "Please select department and year.",
+  selectYearError: "Please select a year.",
   selectPeriodError: "Please select a period.",
   metaLoadError: "Failed to load OA attendance filters.",
   fetchStudentsError: "Failed to fetch students.",

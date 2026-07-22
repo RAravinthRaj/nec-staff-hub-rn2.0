@@ -6,22 +6,24 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 
 import { ScrollView } from "react-native";
-
 import { PageContainer } from "@/components";
 import { Body, Header, UserDetails } from "./components";
 import { showToast } from "@/utils";
-
-const MOCK_PROFILE = {
-  name: "Aravinth Raj",
-  gender: "Male",
-  designation: "Assistant Professor",
-  email: "hod@nec.edu.in",
-  phone: "+91 98765 43210",
-  rollNumber: "NEC-HOD-001",
-  birthday: "1998-05-23",
-};
+import { useAuthStore } from "@/store/useAuthStore";
 
 export const ProfileScreen = ({ onLogout }: { onLogout?: () => void }) => {
+  const user = useAuthStore((state) => state.user);
+
+  const profileData = {
+    name: user?.name || "R. Aravinth Raj",
+    gender: "Male",
+    designation: user?.designation || "Assistant Professor",
+    email: user?.email || "staff@nec.edu.in",
+    phone: user?.phone || "+91 98765 12345",
+    rollNumber: user?.staffId || "NEC-STF-102",
+    birthday: "1995-08-15",
+  };
+
   const _handleLogout = () => {
     showToast("Logout Successful", "success");
     onLogout?.();
@@ -30,11 +32,11 @@ export const ProfileScreen = ({ onLogout }: { onLogout?: () => void }) => {
   const _renderProfile = () => {
     return (
       <ScrollView>
-        <Body data={MOCK_PROFILE} />
+        <Body data={profileData} />
         <UserDetails
-          userDetails={MOCK_PROFILE}
+          userDetails={profileData}
           handleLogOut={_handleLogout}
-          notificationsEnabled={false}
+          notificationsEnabled={true}
         />
       </ScrollView>
     );

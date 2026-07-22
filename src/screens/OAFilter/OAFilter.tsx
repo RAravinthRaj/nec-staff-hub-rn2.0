@@ -320,8 +320,8 @@ export const OAFilterScreen = ({ navigation }: any) => {
   const navigateToNotification = () => navigation.navigate("Notification");
 
   const fetchStudents = async (nextPage = page) => {
-    if (!department || !year) {
-      showToast(OA_HOME_CONFIG.selectDepartmentYearError, "error");
+    if (!year) {
+      showToast(OA_HOME_CONFIG.selectYearError || "Please select a year", "error");
       return;
     }
 
@@ -370,9 +370,9 @@ export const OAFilterScreen = ({ navigation }: any) => {
   };
 
   useEffect(() => {
-    if (metaLoading || !department || !year) return;
+    if (metaLoading || !year) return;
     fetchStudents(1);
-  }, [metaLoading, department, year, mode]);
+  }, [metaLoading, year, mode]);
 
   const handleExport = async () => {
     try {
@@ -383,7 +383,7 @@ export const OAFilterScreen = ({ navigation }: any) => {
         pageSize: undefined,
       });
       showToast(
-        res?.payload?.message || OA_HOME_CONFIG.exportQueuedMessage,
+        (res?.payload as any)?.message || OA_HOME_CONFIG.exportQueuedMessage,
         "success",
       );
     } catch (err: any) {
@@ -530,15 +530,6 @@ export const OAFilterScreen = ({ navigation }: any) => {
           setMode(value as AttendanceMode);
           setPage(1);
         })}
-        {renderDropdownField(
-          OA_HOME_CONFIG.department,
-          department,
-          departments,
-          (value) => {
-            setDepartment(value);
-            setPage(1);
-          },
-        )}
       </View>
 
       <View style={styles.row}>
@@ -651,7 +642,7 @@ export const OAFilterScreen = ({ navigation }: any) => {
 
   return (
     <>
-      <Header navigateToNotification={navigateToNotification} />
+      <Header navigateToNotification={navigateToNotification} showBadge={false} />
       <PageContainer isLightStatusBar={true}>{renderContent()}</PageContainer>
     </>
   );

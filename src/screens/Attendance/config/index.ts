@@ -49,5 +49,6 @@ export const ATTENDANCE_CONFIG = {
     present: "badgeGreen",
     absent: "red",
     onDuty: "orange",
-  },
+    od: "orange",
+  } as Record<string, string>,
 };

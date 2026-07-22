@@ -57,7 +57,7 @@ const MOCK_SCHEDULES = [
   },
 ];
 
-export const HomeScreen = () => {
+export const HomeScreen = ({ navigation }: any) => {
   const today = dayjs().format("YYYY-MM-DD");
   const [date, setDate] = useState(today);
   const schedules = useMemo(
@@ -66,11 +66,17 @@ export const HomeScreen = () => {
   );
 
   const _navigateToAttendance = (courseBatchId: number, periodId: number) => {
-    showToast("Attendance screen is disabled in frontend-only mode.", "info");
+    navigation.navigate("Attendance", {
+      courseBatchId,
+      periodId,
+      course_batch_id: courseBatchId,
+      period_id: periodId,
+      date: dayjs(date).format("DD.MM.YYYY"),
+    });
   };
 
   const _navigateToNotification = () => {
-    showToast("Notifications are disabled in frontend-only mode.", "info");
+    navigation.navigate("Notification");
   };
 
   const _retryFetchSchedules = () => {

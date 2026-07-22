@@ -36,6 +36,8 @@ export const CustomSwitch = ({ status, onChange }: ICustomSwitch) => {
     }
   };
 
+  const currentColor = (theme.colors as any)[ATTENDANCE_CONFIG.color[changeStatus]] || theme.colors.primary;
+
   return (
     <TouchableOpacity
       onPress={_toggleStatus}
@@ -43,7 +45,7 @@ export const CustomSwitch = ({ status, onChange }: ICustomSwitch) => {
       style={StyleSheet.flatten([
         S.container,
         {
-          borderColor: theme.colors[ATTENDANCE_CONFIG.color[changeStatus]],
+          borderColor: currentColor,
           flexDirection: changeStatus === "present" ? "row-reverse" : "row",
         },
       ])}
@@ -52,8 +54,7 @@ export const CustomSwitch = ({ status, onChange }: ICustomSwitch) => {
         style={StyleSheet.flatten([
           S.dot,
           {
-            backgroundColor:
-              theme.colors[ATTENDANCE_CONFIG.color[changeStatus]],
+            backgroundColor: currentColor,
           },
         ])}
       />
@@ -62,7 +63,7 @@ export const CustomSwitch = ({ status, onChange }: ICustomSwitch) => {
         style={StyleSheet.flatten([
           S.text,
           {
-            color: theme.colors[ATTENDANCE_CONFIG.color[changeStatus]],
+            color: currentColor,
           },
         ])}
       >

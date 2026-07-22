@@ -155,8 +155,8 @@ export const OAHomeScreen = ({ navigation }: any) => {
   }, [fetchNotifications, loadMeta]);
 
   const fetchStudents = async (nextPage = page) => {
-    if (!department || !year) {
-      showToast(OA_HOME_CONFIG.selectDepartmentYearError, "error");
+    if (!year) {
+      showToast(OA_HOME_CONFIG.selectYearError || "Please select a year", "error");
       return;
     }
 
@@ -211,9 +211,9 @@ export const OAHomeScreen = ({ navigation }: any) => {
   };
 
   useEffect(() => {
-    if (metaLoading || !department || !year) return;
+    if (metaLoading || !year) return;
     fetchStudents(1);
-  }, [metaLoading, department, year, mode, periodId]);
+  }, [metaLoading, year, mode, periodId]);
 
   const _navigateToNotification = () => navigation.navigate("Notification");
 
@@ -340,7 +340,7 @@ export const OAHomeScreen = ({ navigation }: any) => {
       return <Loader />;
     }
 
-    if (!initialStudentsLoadSettled && department && year) {
+    if (!initialStudentsLoadSettled && year) {
       return <Loader />;
     }
 

@@ -10,7 +10,7 @@ export const registerPushToken = async (tokenValue: string, platform: string) =>
       throw new Error("Unauthorized");
     }
 
-    const { data } = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate<any>({
       mutation: REGISTER_PUSH_TOKEN,
       variables: {
         token: tokenValue,
@@ -42,7 +42,7 @@ export const unregisterPushToken = async (tokenValue: string) => {
       throw new Error("Unauthorized");
     }
 
-    const { data } = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate<any>({
       mutation: UNREGISTER_PUSH_TOKEN,
       variables: {
         token: tokenValue,
