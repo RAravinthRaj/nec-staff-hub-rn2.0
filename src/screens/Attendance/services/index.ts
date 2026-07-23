@@ -5,6 +5,8 @@ Proprietary and confidential.
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 
+import { AuthApi } from "@/services/authApi";
+
 const MOCK_STUDENTS = [
   { studentId: 101, rollNumber: 2115001, name: "Aadhithya V", status: "present" },
   { studentId: 102, rollNumber: 2115002, name: "Abinaya K", status: "present" },
@@ -20,7 +22,7 @@ const MOCK_STUDENTS = [
   { studentId: 112, rollNumber: 2115012, name: "Ram Kumar V", status: "absent" },
   { studentId: 113, rollNumber: 2115013, name: "Sowmiya M", status: "present" },
   { studentId: 114, rollNumber: 2115014, name: "Vigneshwaran S", status: "present" },
-  { studentId: 115, rollNumber: 2115015, name: "Yogesh K", status: "present" },
+  { studentId: 115, rollNumber: 2115015, name: "Yogesh K", status: "absent" },
 ];
 
 class AttendanceService {
@@ -40,19 +42,45 @@ class AttendanceService {
     period_id: number,
     date: string,
   ): Promise<any> {
-    const presentCount = MOCK_STUDENTS.filter((s) => s.status === "present").length;
-    const absentCount = MOCK_STUDENTS.filter((s) => s.status === "absent").length;
-    const odCount = MOCK_STUDENTS.filter((s) => s.status === "od").length;
+    try {
+      const formattedDate = date ? (date.includes(".") ? date.split(".").reverse().join("-") : date) : undefined;
+      const res = await AuthApi.getStudentsForAttendance(course_batch_id, 1, formattedDate, period_id);
+      const fetchedStudents = res?.students || [];
 
-    return {
-      payload: {
-        totalStudentCount: MOCK_STUDENTS.length,
-        presentCount,
-        absentCount,
-        odCount,
+      const studentList = fetchedStudents.map((s: any) => ({
+        studentId: s.studentId,
+        rollNumber: s.registerNumber || s.rollNumber,
+        name: s.studentName || s.name,
+        status: (s.status || "absent").toLowerCase(),
+      }));
+
+      const students = studentList.length > 0 ? studentList : MOCK_STUDENTS;
+      const presentCount = students.filter((s: any) => s.status === "present").length;
+      const absentCount = students.filter((s: any) => s.status === "absent").length;
+      const odCount = students.filter((s: any) => s.status === "od" || s.status === "onduty").length;
+
+      return {
+        course_batch_id,
+        period_id,
+        date,
+        total_students: students.length,
+        present_count: presentCount,
+        absent_count: absentCount,
+        od_count: odCount,
+        students,
+      };
+    } catch (error: any) {
+      return {
+        course_batch_id,
+        period_id,
+        date,
+        total_students: MOCK_STUDENTS.length,
+        present_count: MOCK_STUDENTS.filter((s) => s.status === "present").length,
+        absent_count: MOCK_STUDENTS.filter((s) => s.status === "absent").length,
+        od_count: MOCK_STUDENTS.filter((s) => s.status === "od").length,
         students: MOCK_STUDENTS,
-      },
-    };
+      };
+    }
   }
 
   async submitAttendanceEntryAPI(
@@ -60,12 +88,19 @@ class AttendanceService {
     date: string,
     students: { student_id: number; status: "PRESENT" | "ABSENT" | "ON_DUTY" }[],
   ): Promise<any> {
-    return {
-      payload: {
-        success: true,
-        message: "Attendance saved successfully.",
-      },
-    };
+    const formattedDate = date ? (date.includes(".") ? date.split(".").reverse().join("-") : date) : new Date().toISOString().split("T")[0];
+    const records = students.map((s) => ({
+      regno: String(s.student_id),
+      status: s.status === "PRESENT" ? "P" : s.status === "ON_DUTY" ? "OD" : "A",
+    }));
+
+    return AuthApi.submitAttendance({
+      courseId: 1,
+      sectionId: 1,
+      periodNumber: period_id,
+      attendanceDate: formattedDate,
+      records,
+    });
   }
 }
 

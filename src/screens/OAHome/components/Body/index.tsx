@@ -104,6 +104,7 @@ export interface IBody {
   saveLoading: boolean;
   studentsLoading: boolean;
   showStatistics?: boolean;
+  isStaff?: boolean;
 }
 
 export const Body = ({
@@ -138,6 +139,7 @@ export const Body = ({
   saveLoading,
   studentsLoading,
   showStatistics = true,
+  isStaff = false,
 }: IBody) => {
   const { theme } = useTheme();
   const colors: any = theme.colors;
@@ -362,61 +364,91 @@ export const Body = ({
     </View>
   );
 
-  const renderModeAndDepartmentFields = () => (
-    <View style={StyleSheet.flatten([S.fullWidthField])}>
-      {renderDropDownField(
-        OA_HOME_CONFIG.mode,
-        mode,
-        OA_HOME_CONFIG.modes,
-        onModeChange,
-      )}
-    </View>
-  );
-
-  const renderYearAndStatusFields = () => (
-    <View style={StyleSheet.flatten([S.categoryContainer])}>
-      {renderDropDownField(OA_HOME_CONFIG.year, year, years, onYearChange)}
-      {renderDropDownField(
-        OA_HOME_CONFIG.statusFilter,
-        statusFilter,
-        OA_HOME_CONFIG.statusOptions.filter(
-          (item) => mode === "RANGE" || item.value !== "mixed",
-        ),
-        onStatusFilterChange,
-        OA_HOME_CONFIG.all,
-      )}
-    </View>
-  );
-
-  const renderPeriodField = () => {
-    if (mode !== "PERIOD") {
-      return null;
+  const renderTopFilterRow = () => {
+    if (isStaff) {
+      return (
+        <View style={StyleSheet.flatten([S.categoryContainer])}>
+          <View style={StyleSheet.flatten([S.field])}>
+            {renderDropDownField(
+              OA_HOME_CONFIG.mode,
+              mode,
+              OA_HOME_CONFIG.modes,
+              onModeChange,
+            )}
+          </View>
+          <View style={StyleSheet.flatten([S.field])}>
+            {renderDropDownField(
+              OA_HOME_CONFIG.statusFilter,
+              statusFilter,
+              OA_HOME_CONFIG.statusOptions.filter(
+                (item) => mode === "RANGE" || item.value !== "mixed",
+              ),
+              onStatusFilterChange,
+              OA_HOME_CONFIG.all,
+            )}
+          </View>
+        </View>
+      );
     }
 
     return (
-      <View style={StyleSheet.flatten([S.fullWidthField])}>
-        {renderTitle(OA_HOME_CONFIG.period)}
-        <DropDown
-          value={periodId ? String(periodId) : ""}
-          placeholder={OA_HOME_CONFIG.selectPlaceholder}
-          items={periods.map((item) => ({
-            label: item.label,
-            value: String(item.id),
-          }))}
-          onChange={onPeriodChange}
-        />
-      </View>
+      <>
+        <View style={StyleSheet.flatten([S.fullWidthField])}>
+          {renderDropDownField(
+            OA_HOME_CONFIG.mode,
+            mode,
+            OA_HOME_CONFIG.modes,
+            onModeChange,
+          )}
+        </View>
+        <View style={StyleSheet.flatten([S.categoryContainer])}>
+          {renderDropDownField(OA_HOME_CONFIG.year, year, years, onYearChange)}
+          {renderDropDownField(
+            OA_HOME_CONFIG.statusFilter,
+            statusFilter,
+            OA_HOME_CONFIG.statusOptions.filter(
+              (item) => mode === "RANGE" || item.value !== "mixed",
+            ),
+            onStatusFilterChange,
+            OA_HOME_CONFIG.all,
+          )}
+        </View>
+      </>
     );
   };
 
-  const renderDateFields = () => (
-    <View style={StyleSheet.flatten([S.dateContainer])}>
-      {renderDateField(OA_HOME_CONFIG.startDate, startDate, onStartDateChange)}
-      {mode === "RANGE"
-        ? renderDateField(OA_HOME_CONFIG.endDate, endDate, onEndDateChange)
-        : null}
-    </View>
-  );
+  const renderDateAndPeriodFields = () => {
+    if (mode === "PERIOD") {
+      return (
+        <View style={StyleSheet.flatten([S.dateContainer])}>
+          <View style={StyleSheet.flatten([S.field])}>
+            {renderDateField(OA_HOME_CONFIG.startDate, startDate, onStartDateChange)}
+          </View>
+          <View style={StyleSheet.flatten([S.field])}>
+            {renderTitle(OA_HOME_CONFIG.period)}
+            <DropDown
+              value={periodId ? String(periodId) : ""}
+              placeholder={OA_HOME_CONFIG.selectPlaceholder}
+              items={periods.map((item) => ({
+                label: item.label,
+                value: String(item.id),
+              }))}
+              onChange={onPeriodChange}
+            />
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={StyleSheet.flatten([S.dateContainer])}>
+        {renderDateField(OA_HOME_CONFIG.startDate, startDate, onStartDateChange)}
+        {mode === "RANGE"
+          ? renderDateField(OA_HOME_CONFIG.endDate, endDate, onEndDateChange)
+          : null}
+      </View>
+    );
+  };
 
   const renderActionButtons = () => (
     <View style={StyleSheet.flatten([S.actionRow])}>
@@ -425,30 +457,36 @@ export const Body = ({
         style={StyleSheet.flatten([
           S.secondaryButton,
           { borderColor: colors.primary },
+          isStaff && { flex: 1, backgroundColor: theme.colors.primary },
         ])}
         onPress={onApplyFilters}
       >
         <Text
-          style={StyleSheet.flatten([S.text, { color: theme.colors.primary }])}
+          style={StyleSheet.flatten([
+            S.text,
+            { color: isStaff ? theme.colors.white : theme.colors.primary },
+          ])}
         >
           {studentsLoading ? OA_HOME_CONFIG.loading : OA_HOME_CONFIG.applyButtonTitle}
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        activeOpacity={0.8}
-        style={StyleSheet.flatten([
-          S.primaryButton,
-          { backgroundColor: theme.colors.primary },
-        ])}
-        onPress={onSave}
-      >
-        <Text
-          style={StyleSheet.flatten([S.text, { color: theme.colors.white }])}
+      {!isStaff && (
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={StyleSheet.flatten([
+            S.primaryButton,
+            { backgroundColor: theme.colors.primary },
+          ])}
+          onPress={onSave}
         >
-          {saveLoading ? OA_HOME_CONFIG.saving : OA_HOME_CONFIG.buttonTitle}
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={StyleSheet.flatten([S.text, { color: theme.colors.white }])}
+          >
+            {saveLoading ? OA_HOME_CONFIG.saving : OA_HOME_CONFIG.buttonTitle}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -522,10 +560,8 @@ export const Body = ({
   return (
     <View style={StyleSheet.flatten([S.container])}>
       <View style={StyleSheet.flatten([S.headerContainer])}>
-        {renderModeAndDepartmentFields()}
-        {renderYearAndStatusFields()}
-        {renderPeriodField()}
-        {renderDateFields()}
+        {renderTopFilterRow()}
+        {renderDateAndPeriodFields()}
         {renderSearchBar()}
         {showStatistics ? renderStatistics() : null}
         {renderActionButtons()}

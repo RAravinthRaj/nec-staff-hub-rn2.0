@@ -11,12 +11,28 @@ import { Fonts } from "@/assets";
 export const styles = StyleSheet.create({
   container: {
     width: "100%",
+    alignItems: "center",
   },
   mainTitleContainer: {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 30,
+  },
+  headerRow: {
+    width: ScreenWidth * 0.91,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  headerText: {
+    fontSize: 16,
+    textAlign: "center",
+    fontFamily: Fonts.bold,
+    lineHeight: 20,
   },
   titleContainer: {
     width: ScreenWidth * 0.91,

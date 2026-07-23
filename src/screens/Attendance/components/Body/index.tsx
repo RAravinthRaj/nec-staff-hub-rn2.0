@@ -11,7 +11,6 @@ import {
   View,
   Image,
   StyleSheet,
-  FlatList,
   TextInput,
   TouchableOpacity,
 } from "react-native";
@@ -26,6 +25,7 @@ export interface IBody {
   markAllPresent: () => void;
   markAllAbsent: () => void;
   searchStudents: (query: string) => void;
+  openCopyModal?: () => void;
 }
 
 export const Body = ({
@@ -33,6 +33,7 @@ export const Body = ({
   markAllAbsent,
   markAllPresent,
   searchStudents,
+  openCopyModal,
 }: IBody) => {
   const { theme } = useTheme();
   const [searchData, setSearchData] = useState("");
@@ -53,54 +54,47 @@ export const Body = ({
     searchStudents(searchData);
   }, [searchData]);
 
-  const _renderCard = ({ item }: any) => {
-    return (
-      <View
-        style={StyleSheet.flatten([
-          S.card,
-          { backgroundColor: (theme.colors as any)[item.color] },
-        ])}
-      >
-        <View style={StyleSheet.flatten([S.imageContainer])}>
-          <Image
-            source={(Images as any)[item.image]}
-            style={StyleSheet.flatten([S.image])}
-          />
-        </View>
-        <View style={StyleSheet.flatten([S.detailContainer])}>
-          <Text
-            style={StyleSheet.flatten([
-              S.detail,
-              { color: theme.colors.white, fontFamily: Fonts.bold },
-            ])}
-          >
-            {statsData[item.image]}
-          </Text>
-          <Text
-            style={StyleSheet.flatten([
-              S.description,
-              { color: theme.colors.white, fontFamily: Fonts.semibold },
-            ])}
-          >
-            {item?.description}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
   const _renderStatistics = () => {
     return (
-      <FlatList
-        data={ATTENDANCE_CONFIG.statsDetails}
-        keyExtractor={(_, index) => index.toString()}
-        numColumns={2}
-        renderItem={_renderCard}
-        columnWrapperStyle={{ gap: 5 }}
-        contentContainerStyle={StyleSheet.flatten([S.headerContainer])}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
-      />
+      <View style={S.statsGridContainer}>
+        {ATTENDANCE_CONFIG.statsDetails.map((item) => {
+          const bg = (theme.colors as any)[item.color] || item.color;
+          return (
+            <View
+              key={item.image}
+              style={StyleSheet.flatten([S.card, { backgroundColor: bg }])}
+            >
+              <View style={S.imageContainer}>
+                <Image
+                  source={(Images as any)[item.image]}
+                  style={S.image}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={S.detailContainer}>
+                <Text
+                  style={StyleSheet.flatten([
+                    S.detail,
+                    { color: theme.colors.white, fontFamily: Fonts.bold },
+                  ])}
+                >
+                  {statsData[item.image] ?? 0}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  style={StyleSheet.flatten([
+                    S.description,
+                    { color: theme.colors.white, fontFamily: Fonts.semibold },
+                  ])}
+                >
+                  {item?.description}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
     );
   };
 
@@ -155,46 +149,78 @@ export const Body = ({
             </Text>
           </View>
 
-          <View style={StyleSheet.flatten([S.bottomButtonContainer])}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => {
-                _changeAttendanceStatus("absent");
-              }}
-              style={StyleSheet.flatten([
-                S.button,
-                { borderColor: theme.colors.primary, borderWidth: 2 },
-              ])}
-            >
-              <Text
+          <View style={StyleSheet.flatten([S.bottomButtonContainer, { flexDirection: "column", gap: 10, width: "100%" }])}>
+            <View style={{ flexDirection: "row", gap: 10, width: "100%" }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  _changeAttendanceStatus("absent");
+                }}
                 style={StyleSheet.flatten([
-                  S.text,
-                  { color: theme.colors.primary },
+                  S.button,
+                  { flex: 1, borderColor: theme.colors.primary, borderWidth: 2 },
                 ])}
               >
-                {ATTENDANCE_CONFIG.markAllAbsent}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={StyleSheet.flatten([
+                    S.text,
+                    { color: theme.colors.primary, textAlign: "center" },
+                  ])}
+                >
+                  {ATTENDANCE_CONFIG.markAllAbsent}
+                </Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => {
-                _changeAttendanceStatus("present");
-              }}
-              style={StyleSheet.flatten([
-                S.button,
-                { backgroundColor: theme.colors.primary },
-              ])}
-            >
-              <Text
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  _changeAttendanceStatus("present");
+                }}
                 style={StyleSheet.flatten([
-                  S.text,
-                  { color: theme.colors.white },
+                  S.button,
+                  { flex: 1, backgroundColor: theme.colors.primary },
                 ])}
               >
-                {ATTENDANCE_CONFIG.markAllPresent}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={StyleSheet.flatten([
+                    S.text,
+                    { color: theme.colors.white, textAlign: "center" },
+                  ])}
+                >
+                  {ATTENDANCE_CONFIG.markAllPresent}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {openCopyModal && (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  setIsVisible(false);
+                  openCopyModal();
+                }}
+                style={StyleSheet.flatten([
+                  S.button,
+                  {
+                    width: "100%",
+                    backgroundColor: theme.colors.secondaryBackground,
+                    borderWidth: 1.5,
+                    borderColor: theme.colors.primary,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  },
+                ])}
+              >
+                <Text
+                  style={StyleSheet.flatten([
+                    S.text,
+                    { color: theme.colors.primary, fontFamily: Fonts.semibold, textAlign: "center" },
+                  ])}
+                >
+                  Copy Attendance
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </BottomSheet>
@@ -218,6 +244,8 @@ export const Body = ({
               S.input,
               {
                 borderColor: theme.colors.border,
+                borderWidth: 0,
+                borderRadius: 12,
               },
             ])}
             returnKeyType="send"
@@ -239,78 +267,17 @@ export const Body = ({
           activeOpacity={0.2}
           hitSlop={{ left: 20 }}
         >
-          <Icon name="dots-three-vertical" type="entypo" size={25} />
+          <Icon
+            name="dots-three-vertical"
+            type="entypo"
+            size={18}
+            color={theme.colors.black}
+            style={StyleSheet.flatten([
+              S.search,
+              { backgroundColor: theme.colors.white },
+            ])}
+          />
         </TouchableOpacity>
-        {_renderMenu()}
-      </View>
-    );
-  };
-
-  const _renderTitle = () => {
-    return (
-      <View
-        style={StyleSheet.flatten([
-          S.titleContainer,
-          {
-            backgroundColor: theme.colors.secondary,
-            borderColor: theme.colors.primary,
-          },
-        ])}
-      >
-        <View style={StyleSheet.flatten([S.titleItem])}>
-          <Text
-            style={StyleSheet.flatten([
-              S.titleText,
-              { color: theme.colors.white },
-            ])}
-          >
-            {ATTENDANCE_CONFIG.roll}
-          </Text>
-          <Text
-            style={StyleSheet.flatten([
-              S.titleText,
-              { color: theme.colors.white },
-            ])}
-          >
-            {ATTENDANCE_CONFIG.number}
-          </Text>
-        </View>
-
-        <View style={StyleSheet.flatten([S.titleItem])}>
-          <Text
-            style={StyleSheet.flatten([
-              S.titleText,
-              { color: theme.colors.white },
-            ])}
-          >
-            {ATTENDANCE_CONFIG.name}
-          </Text>
-        </View>
-
-        <View style={StyleSheet.flatten([S.titleItem])}>
-          <Text
-            style={StyleSheet.flatten([
-              S.titleText,
-              { color: theme.colors.white },
-            ])}
-          >
-            {ATTENDANCE_CONFIG.status}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
-  const _renderHeader = () => {
-    return (
-      <View
-        style={StyleSheet.flatten([
-          S.headerContainer,
-          { backgroundColor: theme.colors.white },
-        ])}
-      >
-        {_renderStatistics()}
-        {_renderSearchBar()}
       </View>
     );
   };
@@ -322,8 +289,9 @@ export const Body = ({
         { backgroundColor: theme.colors.white },
       ])}
     >
-      {_renderHeader()}
-      {_renderTitle()}
+      {_renderStatistics()}
+      {_renderSearchBar()}
+      {_renderMenu()}
     </View>
   );
 };

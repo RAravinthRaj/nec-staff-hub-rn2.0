@@ -7,23 +7,33 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 
 import { Loader, NoDataFound, PageContainer } from "@/components";
 import { Body, CustomModal, Header, StudentList } from "./components";
-import { ScrollView } from "react-native";
+import { ScrollView, View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
 import { useAttendanceStore, useSubmitAttendanceStore } from "./stores";
 import { showToast } from "@/utils";
 import { ATTENDANCE_CONFIG } from "./config";
+import { AuthApi } from "@/services/authApi";
+import dayjs from "dayjs";
+import { useTheme } from "@rneui/themed";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Fonts } from "@/assets";
 
 export const AttendanceScreen = ({ navigation, route }: any) => {
+  const { theme } = useTheme();
   const {
     course_batch_id,
     period_id,
     date,
+    courseId: legacyCourseId,
+    sectionId: legacySectionId,
     courseBatchId: legacyCourseBatchId,
     periodId: legacyPeriodId,
   } = route.params || {};
 
-  const resolvedCourseBatchId = course_batch_id ?? legacyCourseBatchId;
-  const resolvedPeriodId = period_id ?? legacyPeriodId;
+  const resolvedCourseBatchId = course_batch_id ?? legacyCourseBatchId ?? 1;
+  const resolvedPeriodId = period_id ?? legacyPeriodId ?? 1;
+  const resolvedCourseId = legacyCourseId ?? resolvedCourseBatchId ?? 1;
+  const resolvedSectionId = legacySectionId ?? 1;
 
   const {
     attendance,
@@ -33,12 +43,16 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
     attendanceLoading,
   } = useAttendanceStore();
 
-  const { submitAttendance, submitLoading, submitError, resetSubmitAttendance } =
-    useSubmitAttendanceStore();
-
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Copy Attendance Modal state
+  const [copyModalVisible, setCopyModalVisible] = useState(false);
+  const [targetCopyDate, setTargetCopyDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [targetCopyPeriod, setTargetCopyPeriod] = useState(1);
+  const [copyLoading, setCopyLoading] = useState(false);
 
   const [details, setDetails] = useState({
     totalStudents: 0,
@@ -51,8 +65,6 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
     if (!resolvedCourseBatchId || !date) return;
 
     resetAttendance();
-    if (!resolvedPeriodId) return;
-
     fetchAttendanceStudents(
       Number(resolvedCourseBatchId),
       Number(resolvedPeriodId),
@@ -91,13 +103,6 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
     }
   }, [attendanceError]);
 
-  useEffect(() => {
-    if (submitError && submitError.length > 0) {
-      showToast(submitError, "error");
-      resetSubmitAttendance();
-    }
-  }, [submitError, resetSubmitAttendance]);
-
   const _retryFetchStudents = () => {
     if (!resolvedCourseBatchId || !resolvedPeriodId || !date) return;
 
@@ -109,15 +114,12 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
     );
   };
 
-  const _navigateToBack = () => {
-    return navigation.goBack();
-  };
+  const _navigateToBack = () => navigation.goBack();
 
   const markAllPresent = () => {
     const updated = students.map((s) =>
       _isOnDuty(s.status) ? s : { ...s, status: "present" },
     );
-
     setStudents(updated);
     setAllStudents(updated);
   };
@@ -126,28 +128,26 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
     const updated = students.map((s) =>
       _isOnDuty(s.status) ? s : { ...s, status: "absent" },
     );
-
     setStudents(updated);
     setAllStudents(updated);
   };
 
   const _handleStatusChange = (studentId: number, status: string) => {
+    const currentStudent = students.find((s) => s.studentId === studentId);
+    if (currentStudent && _isOnDuty(currentStudent.status)) {
+      showToast("On-Duty status cannot be modified by staff", "error");
+      return;
+    }
+
     const updated = students.map((s) =>
       s.studentId === studentId ? { ...s, status } : s,
     );
-
     setStudents(updated);
-
-    const updatedAll = allStudents.map((s) =>
-      s.studentId === studentId ? { ...s, status } : s,
-    );
-
-    setAllStudents(updatedAll);
+    setAllStudents(updated);
   };
 
   const searchStudents = (query: string) => {
     const q = query.toLowerCase().trim();
-
     if (!q) {
       setStudents(allStudents);
       return;
@@ -157,58 +157,25 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
       (s) =>
         s.name.toLowerCase().includes(q) || s.rollNumber.toString().includes(q),
     );
-
     setStudents(filtered);
   };
 
-  const _mapStatusForApi = (
-    status: string,
-  ): "PRESENT" | "ABSENT" | "ON_DUTY" => {
-    const normalized = (status || "").toLowerCase();
-
-    if (normalized === "present") return "PRESENT";
-    if (normalized === "absent") return "ABSENT";
-    if (_isOnDuty(normalized)) {
-      return "ON_DUTY";
+  const _isFutureDate = (val: string) => {
+    let dateStr = val;
+    if (val.includes(".")) {
+      const parts = val.split(".");
+      dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
-
-    return "ABSENT";
-  };
-
-  const _isFutureDate = (value: string) => {
-    const [dayStr, monthStr, yearStr] = value.split(".");
-    const day = Number(dayStr);
-    const month = Number(monthStr);
-    const year = Number(yearStr);
-
-    if (!day || !month || !year) return false;
-
-    const selected = new Date(year, month - 1, day);
-    const today = new Date();
-    const todayStart = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-    );
-
-    return selected.getTime() > todayStart.getTime();
+    return dayjs(dateStr).isAfter(dayjs(), "day");
   };
 
   const _submitAttendance = async () => {
-    if (submitLoading) return;
+    if (submitting) return;
 
-    if (!resolvedPeriodId) {
-      showToast("Missing period id.", "error");
-      return;
-    }
+    const formattedDate = date ? (date.includes(".") ? date.split(".").reverse().join("-") : date) : dayjs().format("YYYY-MM-DD");
 
-    if (!date) {
-      showToast("Missing date.", "error");
-      return;
-    }
-
-    if (_isFutureDate(date)) {
-      showToast("Attendance cannot be saved for a future date.", "error");
+    if (_isFutureDate(formattedDate)) {
+      showToast("Attendance date cannot be in the future", "error");
       return;
     }
 
@@ -218,22 +185,117 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
       return;
     }
 
-    const payloadStudents = sourceStudents.map((s) => ({
-      student_id: Number(s.studentId),
-      status: _mapStatusForApi(s.status),
-    }));
-
     try {
-      await submitAttendance(
-        Number(resolvedPeriodId),
-        date,
-        payloadStudents,
-      );
-      showToast("Attendance saved successfully.", "success");
+      setSubmitting(true);
+      const records = sourceStudents.map((s) => ({
+        regno: String(s.rollNumber || s.studentId),
+        status: _isOnDuty(s.status) ? "OD" : s.status === "present" ? "P" : "A",
+      }));
+
+      await AuthApi.submitAttendance({
+        courseId: Number(resolvedCourseId),
+        sectionId: Number(resolvedSectionId),
+        periodNumber: Number(resolvedPeriodId),
+        attendanceDate: formattedDate,
+        records,
+      });
+
+      showToast("Attendance saved successfully", "success");
+      setConfirmVisible(false);
     } catch (err: any) {
-      showToast(err?.message || "Failed to save attendance.", "error");
+      const msg = err?.response?.data?.message || err?.message || "Failed to save attendance";
+      showToast(msg, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  const _handleCopyAttendance = async () => {
+    if (copyLoading) return;
+
+    try {
+      setCopyLoading(true);
+      const res = await AuthApi.copyAttendance({
+        targetDate: targetCopyDate,
+        targetPeriodNumber: Number(targetCopyPeriod),
+        currentCourseId: Number(resolvedCourseId),
+        currentSectionId: Number(resolvedSectionId),
+      });
+
+      const copiedStudents = res?.students || [];
+      if (copiedStudents.length === 0) {
+        showToast("No attendance records found for target period", "error");
+        return;
+      }
+
+      const updated = students.map((s) => {
+        const match = copiedStudents.find((c: any) => String(c.regno || c.registerNumber) === String(s.rollNumber || s.studentId));
+        if (match) {
+          return { ...s, status: match.status.toLowerCase() };
+        }
+        return s;
+      });
+
+      setStudents(updated);
+      setAllStudents(updated);
+      setCopyModalVisible(false);
+      showToast("Attendance statuses copied. Tap Save to submit.", "success");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Course or section does not match the current period";
+      showToast(msg, "error");
+    } finally {
+      setCopyLoading(false);
+    }
+  };
+
+  const _renderCopyModal = () => (
+    <Modal visible={copyModalVisible} transparent animationType="fade" onRequestClose={() => setCopyModalVisible(false)}>
+      <View style={modalStyles.overlay}>
+        <View style={[modalStyles.card, { backgroundColor: theme.colors.white }]}>
+          <View style={modalStyles.header}>
+            <Text style={[modalStyles.title, { color: theme.colors.black }]}>Copy Attendance</Text>
+            <TouchableOpacity onPress={() => setCopyModalVisible(false)}>
+              <FontAwesome name="times-circle" size={24} color={theme.colors.grey2} />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={modalStyles.label}>Target Date (YYYY-MM-DD):</Text>
+          <TouchableOpacity
+            style={modalStyles.input}
+            onPress={() => setTargetCopyDate(dayjs().subtract(1, "day").format("YYYY-MM-DD"))}
+          >
+            <Text style={{ fontSize: 15, color: theme.colors.black }}>{targetCopyDate}</Text>
+          </TouchableOpacity>
+
+          <Text style={[modalStyles.label, { marginTop: 12 }]}>Period Number (1 - 12):</Text>
+          <View style={modalStyles.periodRow}>
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+              <TouchableOpacity
+                key={num}
+                onPress={() => setTargetCopyPeriod(num)}
+                style={[
+                  modalStyles.periodChip,
+                  {
+                    backgroundColor: targetCopyPeriod === num ? theme.colors.primary : theme.colors.secondaryBackground,
+                  },
+                ]}
+              >
+                <Text style={{ color: targetCopyPeriod === num ? "#FFF" : "#000", fontWeight: "bold" }}>P{num}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={_handleCopyAttendance}
+            style={[modalStyles.copyButton, { backgroundColor: theme.colors.primary }]}
+          >
+            <Text style={modalStyles.copyButtonText}>Copy Statuses</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 
   const _renderAttendance = () => {
     if (attendanceLoading) {
@@ -247,6 +309,7 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
           markAllPresent={markAllPresent}
           markAllAbsent={markAllAbsent}
           searchStudents={searchStudents}
+          openCopyModal={() => setCopyModalVisible(true)}
         />
 
         {students.length === 0 ? (
@@ -276,6 +339,8 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
         {_renderAttendance()}
       </PageContainer>
 
+      {_renderCopyModal()}
+
       {confirmVisible && (
         <CustomModal
           visible={confirmVisible}
@@ -284,7 +349,70 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
         />
       )}
 
-      {submitLoading && <Loader useModalLoader />}
+      {(submitting || copyLoading) && <Loader useModalLoader />}
     </>
   );
 };
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  card: {
+    width: "90%",
+    borderRadius: 20,
+    padding: 18,
+    elevation: 8,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE",
+  },
+  title: {
+    fontSize: 18,
+    fontFamily: Fonts.semibold,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: Fonts.semibold,
+    color: "#555",
+    marginBottom: 6,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#DDD",
+    borderRadius: 10,
+    padding: 12,
+  },
+  periodRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  periodChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  copyButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  copyButtonText: {
+    color: "#FFF",
+    fontFamily: Fonts.semibold,
+    fontSize: 16,
+  },
+});

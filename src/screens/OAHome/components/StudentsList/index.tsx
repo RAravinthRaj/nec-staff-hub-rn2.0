@@ -92,17 +92,70 @@ export const StudentList = ({
     );
   };
 
-  const renderMixedLabel = (status: StudentStatus) => {
-    if (status !== "mixed") {
-      return null;
+  const renderStatusPill = (status: StudentStatus) => {
+    let pillColor = colors.badgeGreen || "#008000";
+    let label = "present";
+    let isDotRight = true;
+
+    if (status === "absent") {
+      pillColor = colors.red || "#EA0000";
+      label = "absent";
+      isDotRight = false;
+    } else if (status === "onDuty" || (status as string) === "od") {
+      pillColor = colors.orange || "#FF6F00";
+      label = "on-duty";
+      isDotRight = false;
+    } else if (status === "mixed") {
+      pillColor = colors.orange || "#FF6F00";
+      label = "mixed";
+      isDotRight = false;
     }
 
     return (
-      <Text
-        style={StyleSheet.flatten([S.summaryText, { color: colors.orange }])}
+      <View
+        style={{
+          borderWidth: 1.5,
+          borderColor: pillColor,
+          borderRadius: 20,
+          paddingHorizontal: 12,
+          paddingVertical: 4,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6,
+          backgroundColor: "#ffffff",
+        }}
       >
-        {OA_HOME_CONFIG.mixed}
-      </Text>
+        {!isDotRight && (
+          <View
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: pillColor,
+            }}
+          />
+        )}
+        <Text
+          style={{
+            color: pillColor,
+            fontSize: 13,
+            fontWeight: "600",
+            textTransform: "lowercase",
+          }}
+        >
+          {label}
+        </Text>
+        {isDotRight && (
+          <View
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: pillColor,
+            }}
+          />
+        )}
+      </View>
     );
   };
 
@@ -125,43 +178,8 @@ export const StudentList = ({
           )}
         </View>
       ) : (
-        <View
-          style={StyleSheet.flatten([
-            S.statusBadge,
-            {
-              backgroundColor:
-                student.status === "present"
-                  ? colors.badgeGreenBackground
-                  : student.status === "absent"
-                    ? colors.redBackground
-                    : colors.orangeBackground,
-            },
-          ])}
-        >
-          <Text
-            style={StyleSheet.flatten([
-              S.statusBadgeText,
-              {
-                color:
-                  student.status === "present"
-                    ? colors.badgeGreen
-                    : student.status === "absent"
-                      ? colors.red
-                      : colors.orange,
-              },
-            ])}
-          >
-            {student.status === "present"
-              ? OA_HOME_CONFIG.statusOptions[1].label
-              : student.status === "absent"
-                ? OA_HOME_CONFIG.statusOptions[2].label
-                : student.status === "onDuty"
-                  ? OA_HOME_CONFIG.statusOptions[3].label
-                  : OA_HOME_CONFIG.mixed}
-          </Text>
-        </View>
+        renderStatusPill(student.status)
       )}
-      {renderMixedLabel(student.status)}
     </View>
   );
 
@@ -223,12 +241,12 @@ export const StudentList = ({
     >
       <View
         style={StyleSheet.flatten([
-        S.mainTitleContainer,
-        {
-          backgroundColor: theme.colors.white,
-          borderColor: colors.border,
-        },
-      ])}
+          S.mainTitleContainer,
+          {
+            backgroundColor: theme.colors.white,
+            borderColor: colors.border,
+          },
+        ])}
       >
         {renderStudentRows()}
       </View>

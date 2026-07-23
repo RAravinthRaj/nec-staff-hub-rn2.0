@@ -25,6 +25,11 @@ export const PROFILE_CONFIG = {
       name: "phone",
     },
     {
+      icon: "building",
+      type: "font-awesome",
+      name: "department",
+    },
+    {
       icon: "idcard",
       type: "antdesign",
       name: "rollNumber",

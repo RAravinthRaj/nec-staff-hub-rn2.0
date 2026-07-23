@@ -69,15 +69,39 @@ export const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: Fonts.bold,
   },
-  modalBackdrop: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
-  modalContainer: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+  backdropTouchable: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  dialogCard: {
+    width: ScreenWidth * 0.9,
+    borderRadius: 24,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  dialogHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
+    paddingBottom: 12,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEEEEE",
+  },
+  dialogTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.semibold,
+    fontWeight: "600",
   },
 });

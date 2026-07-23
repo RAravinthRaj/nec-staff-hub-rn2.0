@@ -45,6 +45,13 @@ export const styles = StyleSheet.create({
   },
   designationText: {
     fontFamily: Fonts.regular,
+    fontWeight: "600",
     fontSize: 16,
+  },
+  departmentText: {
+    fontFamily: Fonts.regular,
+    fontSize: 15,
+    marginTop: 3,
+    opacity: 0.85,
   },
 });

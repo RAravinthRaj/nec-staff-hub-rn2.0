@@ -13,6 +13,7 @@ import { OA_HOME_CONFIG } from "./config";
 import OAHomeService from "./services";
 import { showToast } from "@/utils";
 import { useNotificationStore } from "../Notification/stores";
+import { useAuthStore } from "@/store/useAuthStore";
 
 type AttendanceMode = "DAY" | "RANGE" | "PERIOD";
 type StudentStatus = "present" | "absent" | "onDuty" | "mixed";
@@ -65,6 +66,8 @@ const INITIAL_PAGINATION = {
 };
 
 export const OAHomeScreen = ({ navigation }: any) => {
+  const user = useAuthStore((state) => state.user);
+  const isStaff = user?.role === "STAFF";
   const { unreadCount, fetchNotifications } = useNotificationStore();
   const [departments, setDepartments] = useState<DropdownItem[]>([]);
   const [years, setYears] = useState<DropdownItem[]>([]);
@@ -155,7 +158,7 @@ export const OAHomeScreen = ({ navigation }: any) => {
   }, [fetchNotifications, loadMeta]);
 
   const fetchStudents = async (nextPage = page) => {
-    if (!year) {
+    if (!isStaff && !year) {
       showToast(OA_HOME_CONFIG.selectYearError || "Please select a year", "error");
       return;
     }
@@ -211,9 +214,10 @@ export const OAHomeScreen = ({ navigation }: any) => {
   };
 
   useEffect(() => {
-    if (metaLoading || !year) return;
+    if (metaLoading) return;
+    if (!isStaff && !year) return;
     fetchStudents(1);
-  }, [metaLoading, year, mode, periodId]);
+  }, [metaLoading, year, mode, periodId, isStaff]);
 
   const _navigateToNotification = () => navigation.navigate("Notification");
 
@@ -330,6 +334,7 @@ export const OAHomeScreen = ({ navigation }: any) => {
       <StudentList
         studentsData={students}
         mode={mode}
+        editable={!isStaff}
         onStatusChange={handleStatusChange}
       />
     );
@@ -345,7 +350,11 @@ export const OAHomeScreen = ({ navigation }: any) => {
     }
 
     return (
-      <ScrollView>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
+      >
         <Body
           department={department}
           year={year}
@@ -379,6 +388,7 @@ export const OAHomeScreen = ({ navigation }: any) => {
           saveLoading={saveLoading}
           studentsLoading={studentsLoading}
           showStatistics={false}
+          isStaff={isStaff}
         />
         {renderStudentSection()}
       </ScrollView>

@@ -9,25 +9,17 @@ import { gql } from "@apollo/client";
 export const GET_PROFILE = gql`
   query GetProfile {
     getProfile {
-      created_at
-      date_of_birth
-      department {
-        updated_at
-        name
-        id
-        created_at
-        abbreviation
-      }
-      designation
-      email
-      gender
-      id
+      staffId
+      userId
       name
-      phone_no
-      profile_image
-      roll_no
-      updated_at
-      user_id
+      email
+      mobileNumber
+      rollNumber
+      dob
+      profileImage
+      designation
+      department
+      gender
     }
   }
 `;

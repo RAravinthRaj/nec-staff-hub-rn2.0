@@ -21,6 +21,14 @@ export const STAFF_TAB_CONFIG = [
     },
   },
   {
+    name: "Admin",
+    component: OAHomeScreen,
+    icon: {
+      focused: { name: "dashboard", type: "material" },
+      unfocused: { name: "dashboard", type: "material" },
+    },
+  },
+  {
     name: "Profile",
     component: ProfileScreen,
     icon: {
