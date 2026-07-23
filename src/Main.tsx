@@ -8,13 +8,14 @@ import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { StyleSheet } from "react-native";
-import { FontFamily, ImagesCache, LottiesCache } from "@/assets";
+import { FontFamily, ImagesCache } from "@/assets";
 import { useThemeMode } from "@/hooks";
 import { ThemeProvider } from "@rneui/themed";
 import { cacheFonts, cacheImages } from "@/utils";
 import { AppNavigator } from "@/navigator";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "@/utils/toast";
+import { useAuthStore } from "@/store/useAuthStore";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,6 +29,7 @@ export const Main = () => {
         await Promise.all([
           cacheFonts(FontFamily),
           ...cacheImages(ImagesCache),
+          useAuthStore.getState().checkAuthSession(),
         ]);
       } catch (e) {
         console.warn(e);
@@ -59,8 +61,7 @@ export const Main = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
   },
 });

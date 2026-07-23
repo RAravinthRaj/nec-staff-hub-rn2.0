@@ -7,10 +7,18 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 import { apolloClient } from "../../../../clients";
 import { getGraphqlError, getItemInLocalStorage } from "../../../../utils";
 import { GET_PROFILE } from "./queries";
+import { useAuthStore } from "@/store/useAuthStore";
+import * as SecureStore from "expo-secure-store";
 
 export const getProfile = async () => {
   try {
-    const token = await getItemInLocalStorage("token");
+    let token = useAuthStore.getState().token;
+    if (!token) {
+      token = await SecureStore.getItemAsync("userToken");
+    }
+    if (!token) {
+      token = await getItemInLocalStorage("token");
+    }
 
     if (token && token.length > 0) {
       const { data } = await apolloClient.query<any>({
@@ -32,9 +40,7 @@ export const getProfile = async () => {
 
     throw new Error("Unauthorized");
   } catch (err: any) {
-    let msg =
-      getGraphqlError(err) || "An error occurred while fetching profile.";
-
+    let msg = getGraphqlError(err) || "An error occurred while fetching profile.";
     console.error("Error in getProfile: ", msg);
     throw new Error(msg);
   }
@@ -44,26 +50,15 @@ const formatProfile = (profile: any) => {
   if (!profile) return null;
 
   return {
-    name: profile?.name ?? "",
-
-    designation: profile?.designation
-      ? `${profile.designation}${
-          profile?.department?.abbreviation
-            ? `, Dept of ${profile.department.abbreviation}`
-            : ""
-        }`
-      : "",
-
-    gender: profile?.gender ?? "",
-
-    email: profile?.email ?? "",
-
-    phone: profile?.phone_no ?? "",
-
-    rollNumber: profile?.roll_no ? profile.roll_no.toString() : "",
-
-    birthday: profile?.date_of_birth
-      ? new Date(Number(profile.date_of_birth)).toISOString().split("T")[0]
-      : null,
+    id: profile?.staffId || profile?.userId,
+    user_id: profile?.userId,
+    name: profile?.name || "",
+    email: profile?.email || "",
+    phone_no: profile?.mobileNumber || "",
+    roll_no: profile?.rollNumber || "",
+    date_of_birth: profile?.dob || null,
+    profile_image: profile?.profileImage || null,
+    designation: profile?.designation || "",
+    gender: profile?.gender || "Male",
   };
 };

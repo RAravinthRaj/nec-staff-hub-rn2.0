@@ -6,54 +6,75 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 
 import { create } from "zustand";
+import * as SecureStore from "expo-secure-store";
 
-export type Role = "STAFF" | "HOD";
+export type Role = "STAFF" | "HOD" | "Department Admin";
 
 export interface UserProfile {
+  userId?: number;
   email: string;
   name: string;
   role: Role;
-  designation: string;
-  department: string;
-  staffId: string;
-  phone: string;
+  designation?: string;
+  department?: string;
+  staffId?: string;
+  phone?: string;
 }
 
 interface AuthState {
   isLoggedIn: boolean;
+  isLoading: boolean;
+  token: string | null;
   user: UserProfile | null;
-  login: (email: string) => void;
-  logout: () => void;
+  loginSuccess: (token: string, user: UserProfile) => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuthSession: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   isLoggedIn: false,
+  isLoading: true,
+  token: null,
   user: null,
-  login: (email: string) => {
-    const isHod = email.toLowerCase().includes("hod");
-    const user: UserProfile = isHod
-      ? {
-          email: "hod@nec.edu.in",
-          name: "Dr. S. Gomathi",
-          role: "HOD",
-          designation: "Head of Department (CSE)",
-          department: "Computer Science & Engineering",
-          staffId: "NEC-HOD-001",
-          phone: "+91 98765 43210",
-        }
-      : {
-          email: "staff@nec.edu.in",
-          name: "R. Aravinth Raj",
-          role: "STAFF",
-          designation: "Assistant Professor",
-          department: "Computer Science & Engineering",
-          staffId: "NEC-STF-102",
-          phone: "+91 98765 12345",
-        };
 
-    set({ isLoggedIn: true, user });
+  loginSuccess: async (token: string, user: UserProfile) => {
+    try {
+      await SecureStore.setItemAsync("userToken", token);
+      await SecureStore.setItemAsync("userData", JSON.stringify(user));
+    } catch (err) {
+      console.warn("Error writing to SecureStore", err);
+    }
+    set({ isLoggedIn: true, token, user, isLoading: false });
   },
-  logout: () => {
-    set({ isLoggedIn: false, user: null });
+
+  logout: async () => {
+    try {
+      await SecureStore.deleteItemAsync("userToken");
+      await SecureStore.deleteItemAsync("userData");
+    } catch (err) {
+      console.warn("Error clearing SecureStore", err);
+    }
+    set({ isLoggedIn: false, token: null, user: null, isLoading: false });
+  },
+
+  checkAuthSession: async () => {
+    try {
+      const storedToken = await SecureStore.getItemAsync("userToken");
+      const storedUserData = await SecureStore.getItemAsync("userData");
+
+      if (storedToken && storedUserData) {
+        const parsedUser: UserProfile = JSON.parse(storedUserData);
+        set({
+          isLoggedIn: true,
+          token: storedToken,
+          user: parsedUser,
+          isLoading: false,
+        });
+        return;
+      }
+    } catch (err) {
+      console.warn("Error reading SecureStore", err);
+    }
+    set({ isLoggedIn: false, token: null, user: null, isLoading: false });
   },
 }));

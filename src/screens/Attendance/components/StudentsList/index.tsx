@@ -5,11 +5,13 @@ Proprietary and confidential.
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 
-import { Text, StyleSheet, View, ScrollView } from "react-native";
+import { Text, StyleSheet, View } from "react-native";
 import { styles as S } from "./styles";
 import { useTheme } from "@rneui/themed";
 import React, { useEffect, useState } from "react";
 import { CustomSwitch } from "../Switch";
+import { ATTENDANCE_CONFIG } from "../../config";
+import { Fonts } from "@/assets";
 
 export interface IStudentList {
   studentsData: any[];
@@ -18,7 +20,6 @@ export interface IStudentList {
 
 export const StudentList = ({ studentsData, onStatusChange }: IStudentList) => {
   const { theme } = useTheme();
-
   const [students, setStudents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -29,6 +30,53 @@ export const StudentList = ({ studentsData, onStatusChange }: IStudentList) => {
     if (onStatusChange) {
       onStatusChange(studentId, status);
     }
+  };
+
+  const _renderHeader = () => {
+    return (
+      <View
+        style={StyleSheet.flatten([
+          S.headerRow,
+          {
+            backgroundColor: theme.colors.secondary,
+            borderColor: theme.colors.secondary,
+          },
+        ])}
+      >
+        <View style={StyleSheet.flatten([S.titleItem])}>
+          <Text
+            style={StyleSheet.flatten([
+              S.headerText,
+              { color: theme.colors.white, fontFamily: Fonts.bold },
+            ])}
+          >
+            {ATTENDANCE_CONFIG.roll}{"\n"}{ATTENDANCE_CONFIG.number}
+          </Text>
+        </View>
+
+        <View style={StyleSheet.flatten([S.titleItem])}>
+          <Text
+            style={StyleSheet.flatten([
+              S.headerText,
+              { color: theme.colors.white, fontFamily: Fonts.bold },
+            ])}
+          >
+            {ATTENDANCE_CONFIG.name}
+          </Text>
+        </View>
+
+        <View style={StyleSheet.flatten([S.titleItem])}>
+          <Text
+            style={StyleSheet.flatten([
+              S.headerText,
+              { color: theme.colors.white, fontFamily: Fonts.bold },
+            ])}
+          >
+            {ATTENDANCE_CONFIG.status}
+          </Text>
+        </View>
+      </View>
+    );
   };
 
   const _renderData = () => {
@@ -42,12 +90,13 @@ export const StudentList = ({ studentsData, onStatusChange }: IStudentList) => {
           },
         ])}
       >
+        {_renderHeader()}
         {students.map((student: any, index: number) => {
           const isLast = index === students.length - 1;
 
           return (
             <View
-              key={student.studentId}
+              key={student.studentId || index}
               style={StyleSheet.flatten([
                 S.titleContainer,
                 isLast && S.lastStyle,

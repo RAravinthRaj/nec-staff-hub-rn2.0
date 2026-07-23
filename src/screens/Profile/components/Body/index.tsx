@@ -17,12 +17,17 @@ export interface IBody {
 
 export const Body = ({ data }: IBody) => {
   const { theme } = useTheme();
+  const [imageError, setImageError] = useState(false);
+
+  const photoUri = data?.profilePhoto || data?.profile_image;
+  const hasCustomPhoto = photoUri && typeof photoUri === "string" && photoUri.length > 0 && !imageError;
 
   const _renderLogo = () => {
     return (
       <View style={StyleSheet.flatten([S.imageContainer])}>
         <Image
-          source={Images.profile}
+          source={hasCustomPhoto ? { uri: photoUri } : Images.profile}
+          onError={() => setImageError(true)}
           style={StyleSheet.flatten([S.profileImage])}
         />
       </View>
@@ -30,6 +35,14 @@ export const Body = ({ data }: IBody) => {
   };
 
   const _renderName = () => {
+    const prefix = data?.gender === "Female" ? "Ms." : data?.gender === "Male" ? "Mr." : "";
+    const displayName = prefix ? `${prefix} ${data?.name || ""}` : data?.name || "Staff Member";
+
+    let designationStr = data?.designation || "Assistant Professor";
+    if (designationStr.includes(",")) {
+      designationStr = designationStr.split(",")[0].trim();
+    }
+
     return (
       <View style={StyleSheet.flatten([S.textContainer])}>
         <Text
@@ -38,10 +51,10 @@ export const Body = ({ data }: IBody) => {
             { color: theme.colors.primary },
           ])}
         >
-          {data?.gender === "Male" ? "Mr." : "Ms."} {data?.name}
+          {displayName}
         </Text>
         <Text style={StyleSheet.flatten([S.designationText])}>
-          {data?.designation}
+          {designationStr}
         </Text>
       </View>
     );

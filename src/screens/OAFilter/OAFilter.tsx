@@ -24,6 +24,7 @@ import { OA_HOME_CONFIG } from "../OAHome/config";
 import OAHomeService from "../OAHome/services";
 import { showToast } from "@/utils";
 import { Fonts, Images } from "@/assets";
+import { useAuthStore } from "@/store/useAuthStore";
 
 type AttendanceMode = "DAY" | "RANGE";
 type StudentStatus = "present" | "absent" | "onDuty" | "mixed";
@@ -532,22 +533,37 @@ export const OAFilterScreen = ({ navigation }: any) => {
         })}
       </View>
 
-      <View style={styles.row}>
-        {renderDropdownField(OA_HOME_CONFIG.year, year, years, (value) => {
-          setYear(value);
-          setPage(1);
-        })}
-        {renderDropdownField(
-          OA_HOME_CONFIG.statusFilter,
-          statusFilter,
-          OA_HOME_CONFIG.statusOptions,
-          (value) => {
-            setStatusFilter(value);
+      {useAuthStore.getState().user?.role === "STAFF" ? (
+        <View style={styles.field}>
+          {renderDropdownField(
+            OA_HOME_CONFIG.statusFilter,
+            statusFilter,
+            OA_HOME_CONFIG.statusOptions,
+            (value) => {
+              setStatusFilter(value);
+              setPage(1);
+            },
+            OA_HOME_CONFIG.all,
+          )}
+        </View>
+      ) : (
+        <View style={styles.row}>
+          {renderDropdownField(OA_HOME_CONFIG.year, year, years, (value) => {
+            setYear(value);
             setPage(1);
-          },
-          OA_HOME_CONFIG.all,
-        )}
-      </View>
+          })}
+          {renderDropdownField(
+            OA_HOME_CONFIG.statusFilter,
+            statusFilter,
+            OA_HOME_CONFIG.statusOptions,
+            (value) => {
+              setStatusFilter(value);
+              setPage(1);
+            },
+            OA_HOME_CONFIG.all,
+          )}
+        </View>
+      )}
 
       <View style={styles.row}>
         {renderDateField(OA_HOME_CONFIG.startDate, startDate, setStartDate)}
@@ -629,7 +645,11 @@ export const OAFilterScreen = ({ navigation }: any) => {
     }
 
     return (
-      <ScrollView>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
+      >
         <View style={styles.container}>
           {renderFilterPanel()}
           {renderStats()}

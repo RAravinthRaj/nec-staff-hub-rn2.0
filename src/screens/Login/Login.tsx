@@ -5,21 +5,28 @@ Proprietary and confidential.
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 
-import { PageContainer, LogoHeader, Footer } from "@/components";
+import { PageContainer, LogoHeader, Footer, Loader } from "@/components";
 import { useEffect, useState } from "react";
 import { Keyboard, Platform } from "react-native";
 import { Body } from "./components";
 import { showToast } from "@/utils/toast";
+import { AuthApi } from "@/services/authApi";
+import { useAuthStore, UserProfile } from "@/store/useAuthStore";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { config } from "@/config";
 
 export const LoginScreen = ({ navigation }: any) => {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [email, setEmail] = useState("");
-
-  const _navigateToLogin = () => {
-    return navigation.navigate("Otp", { email: email });
-  };
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (config.googleWebClientId) {
+      GoogleSignin.configure({
+        webClientId: config.googleWebClientId,
+      });
+    }
+
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       () => setKeyboardOpen(true),
@@ -37,19 +44,65 @@ export const LoginScreen = ({ navigation }: any) => {
   }, []);
 
   const _handleSendOtp = async () => {
-    if (!email) {
-      showToast("Email is required", "error");
+    const targetEmail = email.trim();
+    if (!targetEmail) {
+      showToast("Please enter your email address", "error");
       return;
     }
 
-    showToast("Demo OTP is 1234", "success");
-    _navigateToLogin();
+    try {
+      setLoading(true);
+      const res = await AuthApi.sendOTP(targetEmail);
+      showToast("OTP sent successfully", "success");
+      navigation.navigate("Otp", { email: targetEmail });
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || "Failed to send OTP";
+      showToast(errorMsg, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const _handleGoogleLogin = async () => {
-    const demoEmail = email || "hod@nec.edu.in";
-    showToast("Google login is disabled in frontend-only mode.", "info");
-    return navigation.navigate("Otp", { email: demoEmail });
+    try {
+      setLoading(true);
+
+      // Force account chooser every time by signing out previous session first
+      try {
+        await GoogleSignin.signOut();
+      } catch (e) {
+        // Ignore if no active session existed
+      }
+
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.data?.idToken || undefined;
+      const googleEmail = userInfo.data?.user?.email || email.trim();
+
+      const res = await AuthApi.googleLogin({
+        idToken,
+        email: googleEmail,
+      });
+
+      const roleName = res?.role || "Staff";
+      const normalizedRole = roleName === "Department Admin" ? "HOD" : "STAFF";
+
+      const userProfile: UserProfile = {
+        userId: res?.user?.userId,
+        email: res?.user?.email || googleEmail,
+        name: res?.user?.userName || "Staff User",
+        role: normalizedRole,
+        staffId: String(res?.user?.staffId || "1"),
+      };
+
+      await useAuthStore.getState().loginSuccess(res.token, userProfile);
+      showToast("Sign in Success", "success");
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || "Google Sign-In failed";
+      showToast(errorMsg, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,6 +116,7 @@ export const LoginScreen = ({ navigation }: any) => {
         />
       </PageContainer>
 
+      {loading && <Loader useModalLoader />}
       {!keyboardOpen && <Footer />}
     </>
   );

@@ -21,6 +21,8 @@ export interface Profile {
   user_id: string;
   email: string;
   name: string;
+  designation?: string | null;
+  gender?: string | null;
   roll_no: number;
   phone_no?: string | null;
   profile_image?: string | null;

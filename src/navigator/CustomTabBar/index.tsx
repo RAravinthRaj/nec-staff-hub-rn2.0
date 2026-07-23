@@ -5,7 +5,7 @@ Proprietary and confidential.
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, memo } from "react";
 import {
   View,
   TouchableOpacity,
@@ -23,7 +23,7 @@ const H_PADDING = 12;
 const ITEM_MARGIN = 6;
 const PILL_HEIGHT = 35;
 
-export const CustomTabBar = ({
+export const CustomTabBar = memo(({
   state,
   descriptors,
   navigation,
@@ -39,11 +39,11 @@ export const CustomTabBar = ({
     Animated.spring(animatedIndex, {
       toValue: state.index,
       stiffness: 300,
-      damping: 18,
-      mass: 0.7,
+      damping: 24,
+      mass: 0.8,
       useNativeDriver: true,
     }).start();
-  }, [state.index]);
+  }, [state.index, animatedIndex]);
 
   const translateX = animatedIndex.interpolate({
     inputRange: state.routes.map((_, i) => i),
@@ -80,15 +80,26 @@ export const CustomTabBar = ({
         const icon = (options as any).icon;
         const isFocused = state.index === index;
         const iconConfig = isFocused ? icon.focused : icon.unfocused;
-
         const color = isFocused ? theme.colors.white : theme.colors.black;
+
+        const _handlePress = () => {
+          const event = navigation.emit({
+            type: "tabPress",
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
 
         return (
           <TouchableOpacity
             key={route.key}
-            onPress={() => navigation.navigate(route.name)}
+            onPress={_handlePress}
             style={S.tabItem}
-            activeOpacity={0.85}
+            activeOpacity={0.7}
           >
             <Icon
               name={iconConfig.name}
@@ -101,4 +112,4 @@ export const CustomTabBar = ({
       })}
     </View>
   );
-};
+});

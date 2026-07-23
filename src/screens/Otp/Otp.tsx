@@ -1,16 +1,17 @@
-// /*
-// © 2025 Aravinth Raj R. All rights reserved.
-// Unauthorized copying of this file, via any medium, is strictly prohibited.
-// Proprietary and confidential.
-// Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
-// */
+/* 
+© 2025 Aravinth Raj R. All rights reserved.
+Unauthorized copying of this file, via any medium, is strictly prohibited.
+Proprietary and confidential.  
+Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
+*/
 
 import { PageContainer, LogoHeader, Footer, Loader } from "@/components";
 import { Body } from "./components";
 import { useEffect, useState } from "react";
 import { Keyboard, Platform } from "react-native";
 import { showToast } from "@/utils/toast";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore, UserProfile } from "@/store/useAuthStore";
+import { AuthApi } from "@/services/authApi";
 
 export const OtpScreen = ({ route, onLoginSuccess }: any) => {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -40,23 +41,47 @@ export const OtpScreen = ({ route, onLoginSuccess }: any) => {
       return;
     }
 
-    showToast("Demo OTP resent. Use 1234.", "success");
+    try {
+      setLoading(true);
+      const res = await AuthApi.sendOTP(email);
+      showToast(res?.message || "OTP resent successfully", "success");
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || "Failed to resend OTP";
+      showToast(errorMsg, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const _handleVerifyOtp = async (otp: string) => {
-    if (otp !== "1234") {
-      showToast("Use demo OTP 1234", "error");
+    if (!otp) {
+      showToast("Please enter OTP", "error");
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
+      const res = await AuthApi.verifyOTP(email, otp);
+      const roleName = res?.role || "Staff";
+      const normalizedRole = roleName === "Department Admin" ? "HOD" : "STAFF";
 
-    setTimeout(() => {
-      setLoading(false);
-      useAuthStore.getState().login(email || "staff@nec.edu.in");
-      showToast("Login Successful", "success");
+      const userProfile: UserProfile = {
+        userId: res?.user?.userId,
+        email: res?.user?.email || email,
+        name: res?.user?.userName || "Staff User",
+        role: normalizedRole,
+        staffId: String(res?.user?.staffId || "1"),
+      };
+
+      await useAuthStore.getState().loginSuccess(res.token, userProfile);
+      showToast("Sign in Success", "success");
       onLoginSuccess?.();
-    }, 300);
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || "OTP Verification Failed";
+      showToast(errorMsg, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,7 +96,6 @@ export const OtpScreen = ({ route, onLoginSuccess }: any) => {
       </PageContainer>
 
       {loading && <Loader useModalLoader />}
-
       {!keyboardOpen && <Footer />}
     </>
   );

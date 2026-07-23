@@ -158,54 +158,73 @@ export const Body: React.FC<IBody> = ({ setDate }) => {
     />
   );
 
-  const _renderCalendarModal = () => (
-    <Modal
-      visible={showCalendar}
-      transparent
-      animationType="slide"
-      onRequestClose={() => setShowCalendar(false)}
-    >
-      <TouchableOpacity
-        style={StyleSheet.flatten([S.modalBackdrop])}
-        onPress={() => setShowCalendar(false)}
-        activeOpacity={0.8}
+  const _renderCalendarModal = () => {
+    const markedDates = {
+      [selectedDate]: {
+        selected: true,
+        selectedColor: theme.colors.primary,
+        selectedTextColor: "#FFFFFF",
+      },
+    };
+
+    return (
+      <Modal
+        visible={showCalendar}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCalendar(false)}
       >
-        <TouchableOpacity
-          style={StyleSheet.flatten([S.modalContainer])}
-          activeOpacity={0.8}
-        >
-          <Calendar
-            current={selectedDate}
-            onDayPress={(day) => {
-              const isSunday = dayjs(day.dateString).day() === 0;
-              if (isSunday) return;
-
-              setSelectedDate(day.dateString);
-              setWeekDates(getWeekDates(day.dateString));
-              setShowCalendar(false);
-            }}
-            disableAllTouchEventsForDisabledDays={true}
-            disabledDaysIndexes={[0]}
-            theme={{
-              selectedDayBackgroundColor: theme.colors.primary,
-              selectedDayTextColor: theme.colors.white,
-
-              todayTextColor: theme.colors.white,
-              todayBackgroundColor: theme.colors.primary,
-
-              dayTextColor: theme.colors.black,
-              textDisabledColor: "#C0C0C0",
-              monthTextColor: theme.colors.black,
-              textSectionTitleColor: theme.colors.primary,
-
-              arrowColor: theme.colors.primary,
-              calendarBackground: theme.colors.white,
-            }}
+        <View style={S.modalOverlay}>
+          <TouchableOpacity
+            style={S.backdropTouchable}
+            activeOpacity={1}
+            onPress={() => setShowCalendar(false)}
           />
-        </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
-  );
+          <View style={[S.dialogCard, { backgroundColor: theme.colors.white }]}>
+            <View style={S.dialogHeader}>
+              <Text style={[S.dialogTitle, { color: theme.colors.black }]}>
+                Select Schedule Date
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowCalendar(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <FontAwesome name="times-circle" size={24} color={theme.colors.grey2} />
+              </TouchableOpacity>
+            </View>
+
+            <Calendar
+              current={selectedDate}
+              markedDates={markedDates}
+              onDayPress={(day) => {
+                const isSunday = dayjs(day.dateString).day() === 0;
+                if (isSunday) return;
+
+                setSelectedDate(day.dateString);
+                setWeekDates(getWeekDates(day.dateString));
+                setShowCalendar(false);
+              }}
+              disableAllTouchEventsForDisabledDays={true}
+              disabledDaysIndexes={[0]}
+              theme={{
+                selectedDayBackgroundColor: theme.colors.primary,
+                selectedDayTextColor: "#FFFFFF",
+                todayTextColor: theme.colors.primary,
+                dayTextColor: theme.colors.black,
+                textDisabledColor: "#CCCCCC",
+                monthTextColor: theme.colors.black,
+                textSectionTitleColor: theme.colors.primary,
+                textMonthFontWeight: "bold",
+                textMonthFontSize: 16,
+                arrowColor: theme.colors.primary,
+                calendarBackground: theme.colors.white,
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
   const _renderScheduleHeader = () => {
     return (
