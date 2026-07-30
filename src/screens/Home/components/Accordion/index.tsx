@@ -172,29 +172,34 @@ export const Accordion = ({ data, date, navigateToAttendance }: IAccordian) => {
     </View>
   );
 
-  const _renderButton = (courseBatchId: number, periodId: number) => (
-    <ElevatedView style={StyleSheet.flatten([S.buttonContainer])} elevation={5}>
-      <TouchableOpacity
-        style={StyleSheet.flatten([
-          S.button,
-          { backgroundColor: theme.colors.primary },
-        ])}
-        activeOpacity={0.8}
-        onPress={() => {
-          navigateToAttendance(Number(courseBatchId), Number(periodId));
-        }}
-      >
-        <Text
+  const _renderButton = (courseBatchId: number, periodId: number) => {
+    const isMarked = data?.isAttendanceMarked;
+    const buttonLabel = isMarked ? "Update Attd." : (HOME_CONFIG.attendanceButton || "Mark Attd.");
+
+    return (
+      <ElevatedView style={StyleSheet.flatten([S.buttonContainer])} elevation={5}>
+        <TouchableOpacity
           style={StyleSheet.flatten([
-            S.buttonTitle,
-            { color: theme.colors.white, fontFamily: Fonts.semibold },
+            S.button,
+            { backgroundColor: isMarked ? theme.colors.badgeGreen : theme.colors.primary },
           ])}
+          activeOpacity={0.8}
+          onPress={() => {
+            navigateToAttendance(Number(courseBatchId), Number(periodId));
+          }}
         >
-          {HOME_CONFIG.attendanceButton}
-        </Text>
-      </TouchableOpacity>
-    </ElevatedView>
-  );
+          <Text
+            style={StyleSheet.flatten([
+              S.buttonTitle,
+              { color: theme.colors.white, fontFamily: Fonts.semibold },
+            ])}
+          >
+            {buttonLabel}
+          </Text>
+        </TouchableOpacity>
+      </ElevatedView>
+    );
+  };
 
   const _renderBody = () => (
     <View style={StyleSheet.flatten([S.bodyContainer])}>

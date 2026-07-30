@@ -32,10 +32,9 @@ export const HomeScreen = ({ navigation }: any) => {
 
     try {
       setLoading(true);
-      const res = await AuthApi.getTimetable(dayOfWeek);
+      const res = await AuthApi.getTimetable(dayOfWeek, selectedDate);
       setSchedules(res?.schedules || []);
     } catch (err: any) {
-      // Fallback silently if offline or error occurs
       setSchedules([]);
     } finally {
       setLoading(false);

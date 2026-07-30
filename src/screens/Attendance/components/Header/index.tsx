@@ -12,14 +12,24 @@ import { Fonts } from "@/assets";
 import { ATTENDANCE_CONFIG } from "../../config";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import ElevatedView from "react-native-elevated-view";
+import { useNavigation } from "@react-navigation/native";
 
 export interface IHeader {
-  goBack: () => void;
+  goBack?: () => void;
   onSave?: () => void;
 }
 
 export const Header = ({ goBack, onSave }: IHeader) => {
   const { theme } = useTheme();
+  const navigation = useNavigation<any>();
+
+  const handleGoBack = () => {
+    if (goBack) {
+      goBack();
+    } else if (navigation && navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  };
 
   const _renderDesign = () => {
     return (
@@ -69,14 +79,11 @@ export const Header = ({ goBack, onSave }: IHeader) => {
       >
         <View style={StyleSheet.flatten([S.textContainer])}>
           <View style={StyleSheet.flatten([S.titleContainer])}>
-            <TouchableOpacity activeOpacity={1} hitSlop={{ left: 30 }}>
+            <TouchableOpacity activeOpacity={0.7} hitSlop={{ left: 30, right: 30, top: 20, bottom: 20 }} onPress={handleGoBack}>
               <FontAwesome6
                 name="arrow-left-long"
                 size={25}
                 color="white"
-                onPress={() => {
-                  goBack();
-                }}
               />
             </TouchableOpacity>
             <Text

@@ -10,8 +10,13 @@ import { config } from "../config";
 import { useAuthStore } from "@/store/useAuthStore";
 import * as SecureStore from "expo-secure-store";
 
+import { Platform } from "react-native";
+
 const getRestBaseUrl = () => {
-  let url = config.restBaseURL || "http://localhost:8000/rest";
+  let url = config.restBaseURL;
+  if (!url) {
+    url = Platform.OS === "android" ? "http://10.0.2.2:8000/rest" : "http://localhost:8000/rest";
+  }
   return url.replace(/\/+$/, "");
 };
 
@@ -50,8 +55,10 @@ export const AuthApi = {
     return res.data;
   },
 
-  getTimetable: async (dayOfWeek: string) => {
-    const res = await restClient.get(`/timetable?day=${dayOfWeek.toUpperCase()}`);
+  getTimetable: async (dayOfWeek: string, date?: string) => {
+    let url = `/timetable?day=${dayOfWeek.toUpperCase()}`;
+    if (date) url += `&date=${date}`;
+    const res = await restClient.get(url);
     return res.data;
   },
 

@@ -617,10 +617,16 @@ export const OAFilterScreen = ({ navigation }: any) => {
   );
 
   const renderStudentSection = () => {
+    const isHOD = useAuthStore.getState().user?.role !== "STAFF";
+
     if (students.length === 0) {
       return (
         <NoDataFound
-          title={OA_HOME_CONFIG.filterNoDataTitle}
+          title={
+            isHOD && !hasLoadedStudents
+              ? "Please select and apply filters to view student details"
+              : OA_HOME_CONFIG.filterNoDataTitle
+          }
           buttonTitle={OA_HOME_CONFIG.applyButtonTitle}
           onPress={() => fetchStudents(1)}
         />
