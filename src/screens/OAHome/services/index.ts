@@ -8,38 +8,27 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 import { OAFilters, OAAttendanceStudentInput } from "./graphql";
 import { AuthApi } from "@/services/authApi";
 
-const MOCK_DEPARTMENTS = [
-  { label: "Computer Science & Engineering", value: "CSE" },
-  { label: "Information Technology", value: "IT" },
-  { label: "Electronics & Communication", value: "ECE" },
-  { label: "Electrical & Electronics", value: "EEE" },
-  { label: "Mechanical Engineering", value: "MECH" },
-  { label: "Civil Engineering", value: "CIVIL" },
+const DEPARTMENTS = [
+  { label: "Computer Science & Engineering", value: "1" },
+  { label: "Information Technology", value: "2" },
+  { label: "Electronics & Communication", value: "3" },
+  { label: "Electrical & Electronics", value: "4" },
+  { label: "Mechanical Engineering", value: "5" },
 ];
 
-const MOCK_YEARS = [
-  { label: "I Year", value: "I" },
-  { label: "II Year", value: "II" },
-  { label: "III Year", value: "III" },
-  { label: "IV Year", value: "IV" },
+const YEARS = [
+  { label: "II Year", value: "2" },
+  { label: "III Year", value: "3" },
+  { label: "IV Year", value: "4" },
 ];
 
-const MOCK_PERIODS = [
+const PERIODS = [
   { id: 1, label: "Period 1 (09:00 AM - 10:00 AM)", period_number: "1", start_time: "09:00", end_time: "10:00" },
   { id: 2, label: "Period 2 (10:00 AM - 11:00 AM)", period_number: "2", start_time: "10:00", end_time: "11:00" },
   { id: 3, label: "Period 3 (11:15 AM - 12:15 PM)", period_number: "3", start_time: "11:15", end_time: "12:15" },
   { id: 4, label: "Period 4 (01:15 PM - 02:15 PM)", period_number: "4", start_time: "13:15", end_time: "14:15" },
   { id: 5, label: "Period 5 (02:15 PM - 03:15 PM)", period_number: "5", start_time: "14:15", end_time: "15:15" },
   { id: 6, label: "Period 6 (03:30 PM - 04:30 PM)", period_number: "6", start_time: "15:30", end_time: "16:30" },
-];
-
-const ALL_MOCK_STUDENTS = [
-  { student_id: 101, rollNumber: 2115001, name: "Aadhithya V", status: "present", present_days: 28, absent_days: 2, od_days: 0, total_days: 30 },
-  { student_id: 102, rollNumber: 2115002, name: "Abinaya K", status: "present", present_days: 29, absent_days: 1, od_days: 0, total_days: 30 },
-  { student_id: 103, rollNumber: 2115003, name: "Bala Subramanian R", status: "absent", present_days: 22, absent_days: 7, od_days: 1, total_days: 30 },
-  { student_id: 104, rollNumber: 2115004, name: "Deepak Kumar M", status: "present", present_days: 27, absent_days: 2, od_days: 1, total_days: 30 },
-  { student_id: 105, rollNumber: 2115005, name: "Dharshini S", status: "present", present_days: 30, absent_days: 0, od_days: 0, total_days: 30 },
-  { student_id: 106, rollNumber: 2115006, name: "Gokul Nath P", status: "onDuty", present_days: 25, absent_days: 1, od_days: 4, total_days: 30 },
 ];
 
 class OAHomeService {
@@ -57,9 +46,9 @@ class OAHomeService {
   async getMetaAPI() {
     return {
       payload: {
-        departments: MOCK_DEPARTMENTS,
-        years: MOCK_YEARS,
-        periods: MOCK_PERIODS,
+        departments: DEPARTMENTS,
+        years: YEARS,
+        periods: PERIODS,
       },
     };
   }
@@ -72,8 +61,19 @@ class OAHomeService {
         return {
           payload: {
             students: [],
-            summary: { total_students: 0, present_count: 0, absent_count: 0, od_count: 0, mixed_count: 0 },
-            pagination: { page: 1, page_size: 10, total_count: 0, total_pages: 0 },
+            summary: {
+              total_students: 0,
+              present_count: 0,
+              absent_count: 0,
+              od_count: 0,
+              mixed_count: 0,
+            },
+            pagination: {
+              page: 1,
+              page_size: 10,
+              total_count: 0,
+              total_pages: 0,
+            },
             requiresFilter: true,
             message: res.message,
           },
@@ -85,16 +85,22 @@ class OAHomeService {
         student_id: item.studentId,
         rollNumber: item.registerNumber,
         name: item.studentName,
-        status: (item.status || "present").toLowerCase(),
-        present_days: 28,
-        absent_days: 2,
+        status: (item.status || "absent").toLowerCase(),
+        present_days: 0,
+        absent_days: 0,
         od_days: 0,
-        total_days: 30,
+        total_days: 0,
       }));
 
-      const present_count = students.filter((s: any) => s.status === "present").length;
-      const absent_count = students.filter((s: any) => s.status === "absent").length;
-      const od_count = students.filter((s: any) => s.status === "onduty" || s.status === "od").length;
+      const present_count = students.filter(
+        (s: any) => s.status === "present",
+      ).length;
+      const absent_count = students.filter(
+        (s: any) => s.status === "absent",
+      ).length;
+      const od_count = students.filter(
+        (s: any) => s.status === "onduty" || s.status === "od",
+      ).length;
 
       return {
         payload: {
@@ -110,30 +116,28 @@ class OAHomeService {
             page: res?.page || filters.page || 1,
             page_size: 10,
             total_count: res?.total || students.length,
-            total_pages: res?.totalPages || Math.ceil((res?.total || students.length) / 10),
+            total_pages:
+              res?.totalPages ||
+              Math.ceil((res?.total || students.length) / 10),
           },
         },
       };
     } catch (e) {
-      const present_count = ALL_MOCK_STUDENTS.filter((s) => s.status === "present").length;
-      const absent_count = ALL_MOCK_STUDENTS.filter((s) => s.status === "absent").length;
-      const od_count = ALL_MOCK_STUDENTS.filter((s) => s.status === "onDuty").length;
-
       return {
         payload: {
-          students: ALL_MOCK_STUDENTS,
+          students: [],
           summary: {
-            total_students: ALL_MOCK_STUDENTS.length,
-            present_count,
-            absent_count,
-            od_count,
+            total_students: 0,
+            present_count: 0,
+            absent_count: 0,
+            od_count: 0,
             mixed_count: 0,
           },
           pagination: {
             page: filters.page || 1,
             page_size: filters.pageSize || 10,
-            total_count: ALL_MOCK_STUDENTS.length,
-            total_pages: 1,
+            total_count: 0,
+            total_pages: 0,
           },
         },
       };
@@ -144,7 +148,10 @@ class OAHomeService {
     return this.getStudentsAPI(filters);
   }
 
-  async saveAttendanceAPI(filters: OAFilters, students: OAAttendanceStudentInput[]) {
+  async saveAttendanceAPI(
+    filters: OAFilters,
+    students: OAAttendanceStudentInput[],
+  ) {
     return {
       payload: {
         affected_students: students.length,

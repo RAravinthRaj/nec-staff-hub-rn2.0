@@ -61,8 +61,18 @@ export const useAttendanceStore = create<AttendanceState>((set) => ({
         date,
       );
 
+      const attendanceObj = res
+        ? {
+            totalStudentCount: res.total_students || res.students?.length || 0,
+            presentCount: res.present_count || 0,
+            absentCount: res.absent_count || 0,
+            odCount: res.od_count || 0,
+            students: res.students || [],
+          }
+        : null;
+
       set({
-        attendance: res?.payload ?? null,
+        attendance: attendanceObj,
       });
     } catch (err: any) {
       set({

@@ -7,7 +7,14 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 
 import { Loader, NoDataFound, PageContainer } from "@/components";
 import { Body, CustomModal, Header, StudentList } from "./components";
-import { ScrollView, View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  ScrollView,
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { useEffect, useState } from "react";
 import { useAttendanceStore, useSubmitAttendanceStore } from "./stores";
 import { showToast } from "@/utils";
@@ -17,6 +24,7 @@ import dayjs from "dayjs";
 import { useTheme } from "@rneui/themed";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Fonts } from "@/assets";
+import { Calendar } from "react-native-calendars";
 
 export const AttendanceScreen = ({ navigation, route }: any) => {
   const { theme } = useTheme();
@@ -48,11 +56,13 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Copy Attendance Modal state
   const [copyModalVisible, setCopyModalVisible] = useState(false);
-  const [targetCopyDate, setTargetCopyDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [targetCopyDate, setTargetCopyDate] = useState(
+    dayjs().subtract(1, "day").format("YYYY-MM-DD"),
+  );
   const [targetCopyPeriod, setTargetCopyPeriod] = useState(1);
   const [copyLoading, setCopyLoading] = useState(false);
+  const [showCalendarPicker, setShowCalendarPicker] = useState(false);
 
   const [details, setDetails] = useState({
     totalStudents: 0,
@@ -81,7 +91,9 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
 
   const _isOnDuty = (status: string) => {
     const normalized = (status || "").toLowerCase();
-    return normalized === "od" || normalized === "onduty" || normalized === "on_duty";
+    return (
+      normalized === "od" || normalized === "onduty" || normalized === "on_duty"
+    );
   };
 
   useEffect(() => {
@@ -97,82 +109,63 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
     });
   }, [allStudents]);
 
-  useEffect(() => {
-    if (attendanceError && attendanceError.length > 0) {
-      showToast(attendanceError, "error");
-    }
-  }, [attendanceError]);
+  const _handleMarkAll = (type: "present" | "absent") => {
+    const updated = students.map((item) => {
+      if (_isOnDuty(item.status)) {
+        return item; // Lock OD status
+      }
+      return { ...item, status: type };
+    });
 
-  const _retryFetchStudents = () => {
-    if (!resolvedCourseBatchId || !resolvedPeriodId || !date) return;
-
-    resetAttendance();
-    fetchAttendanceStudents(
-      Number(resolvedCourseBatchId),
-      Number(resolvedPeriodId),
-      date,
-    );
-  };
-
-  const _navigateToBack = () => navigation.goBack();
-
-  const markAllPresent = () => {
-    const updated = students.map((s) =>
-      _isOnDuty(s.status) ? s : { ...s, status: "present" },
-    );
     setStudents(updated);
     setAllStudents(updated);
   };
 
-  const markAllAbsent = () => {
-    const updated = students.map((s) =>
-      _isOnDuty(s.status) ? s : { ...s, status: "absent" },
-    );
+  const _handleSingleChange = (id: number) => {
+    const updated = students.map((item) => {
+      if (item.studentId === id) {
+        if (_isOnDuty(item.status)) {
+          return item; // Lock OD status
+        }
+        return {
+          ...item,
+          status: item.status === "present" ? "absent" : "present",
+        };
+      }
+      return item;
+    });
+
     setStudents(updated);
     setAllStudents(updated);
   };
 
-  const _handleStatusChange = (studentId: number, status: string) => {
-    const currentStudent = students.find((s) => s.studentId === studentId);
-    if (currentStudent && _isOnDuty(currentStudent.status)) {
-      showToast("On-Duty status cannot be modified by staff", "error");
-      return;
-    }
-
-    const updated = students.map((s) =>
-      s.studentId === studentId ? { ...s, status } : s,
-    );
-    setStudents(updated);
-    setAllStudents(updated);
-  };
-
-  const searchStudents = (query: string) => {
-    const q = query.toLowerCase().trim();
-    if (!q) {
+  const _handleSearch = (text: string) => {
+    if (!text.trim()) {
       setStudents(allStudents);
       return;
     }
 
     const filtered = allStudents.filter(
       (s) =>
-        s.name.toLowerCase().includes(q) || s.rollNumber.toString().includes(q),
+        s.name.toLowerCase().includes(text.toLowerCase()) ||
+        String(s.rollNumber).toLowerCase().includes(text.toLowerCase()),
     );
     setStudents(filtered);
   };
 
-  const _isFutureDate = (val: string) => {
-    let dateStr = val;
-    if (val.includes(".")) {
-      const parts = val.split(".");
-      dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
-    }
-    return dayjs(dateStr).isAfter(dayjs(), "day");
+  const _isFutureDate = (checkDateStr: string) => {
+    const todayStr = dayjs().format("YYYY-MM-DD");
+    return checkDateStr > todayStr;
   };
 
   const _submitAttendance = async () => {
     if (submitting) return;
 
-    const formattedDate = date ? (date.includes(".") ? date.split(".").reverse().join("-") : date) : dayjs().format("YYYY-MM-DD");
+    const formattedDate = date
+      ? date.includes(".")
+        ? date.split(".").reverse().join("-")
+        : date
+      : dayjs().format("YYYY-MM-DD");
 
     if (_isFutureDate(formattedDate)) {
       showToast("Attendance date cannot be in the future", "error");
@@ -203,7 +196,10 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
       showToast("Attendance saved successfully", "success");
       setConfirmVisible(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Failed to save attendance";
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to save attendance";
       showToast(msg, "error");
     } finally {
       setSubmitting(false);
@@ -222,16 +218,22 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
         currentSectionId: Number(resolvedSectionId),
       });
 
-      const copiedStudents = res?.students || [];
+      const copiedStudents = Array.isArray(res) ? res : res?.records || res?.students || [];
       if (copiedStudents.length === 0) {
-        showToast("No attendance records found for target period", "error");
+        showToast("No attendance records found for target date & period", "error");
         return;
       }
 
       const updated = students.map((s) => {
-        const match = copiedStudents.find((c: any) => String(c.regno || c.registerNumber) === String(s.rollNumber || s.studentId));
+        const match = copiedStudents.find(
+          (c: any) =>
+            String(c.regno || c.registerNumber) ===
+            String(s.rollNumber || s.studentId),
+        );
         if (match) {
-          return { ...s, status: match.status.toLowerCase() };
+          const rawStatus = (match.status || "absent").toLowerCase();
+          const normalized = rawStatus === "p" ? "present" : rawStatus === "a" ? "absent" : rawStatus;
+          return { ...s, status: normalized };
         }
         return s;
       });
@@ -239,9 +241,12 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
       setStudents(updated);
       setAllStudents(updated);
       setCopyModalVisible(false);
-      showToast("Attendance statuses copied. Tap Save to submit.", "success");
+      showToast("Attendance copied successfully. Tap Save to submit.", "success");
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Course or section does not match the current period";
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Course or section does not match the current period";
       showToast(msg, "error");
     } finally {
       setCopyLoading(false);
@@ -249,25 +254,44 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
   };
 
   const _renderCopyModal = () => (
-    <Modal visible={copyModalVisible} transparent animationType="fade" onRequestClose={() => setCopyModalVisible(false)}>
+    <Modal
+      visible={copyModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setCopyModalVisible(false)}
+    >
       <View style={modalStyles.overlay}>
-        <View style={[modalStyles.card, { backgroundColor: theme.colors.white }]}>
+        <View
+          style={[modalStyles.card, { backgroundColor: theme.colors.white }]}
+        >
           <View style={modalStyles.header}>
-            <Text style={[modalStyles.title, { color: theme.colors.black }]}>Copy Attendance</Text>
+            <Text style={[modalStyles.title, { color: theme.colors.black }]}>
+              Copy Attendance
+            </Text>
             <TouchableOpacity onPress={() => setCopyModalVisible(false)}>
-              <FontAwesome name="times-circle" size={24} color={theme.colors.grey2} />
+              <FontAwesome
+                name="times-circle"
+                size={24}
+                color={theme.colors.grey2}
+              />
             </TouchableOpacity>
           </View>
 
-          <Text style={modalStyles.label}>Target Date (YYYY-MM-DD):</Text>
+          <Text style={modalStyles.label}>Select Source Date:</Text>
           <TouchableOpacity
-            style={modalStyles.input}
-            onPress={() => setTargetCopyDate(dayjs().subtract(1, "day").format("YYYY-MM-DD"))}
+            style={[modalStyles.dateInputContainer, { borderColor: theme.colors.border }]}
+            onPress={() => setShowCalendarPicker(true)}
           >
-            <Text style={{ fontSize: 15, color: theme.colors.black }}>{targetCopyDate}</Text>
+            <FontAwesome name="calendar" size={18} color={theme.colors.primary} style={{ marginRight: 10 }} />
+            <Text style={{ fontSize: 15, color: theme.colors.black, flex: 1, fontFamily: Fonts.regular }}>
+              {targetCopyDate}
+            </Text>
+            <FontAwesome name="chevron-down" size={14} color={theme.colors.grey3} />
           </TouchableOpacity>
 
-          <Text style={[modalStyles.label, { marginTop: 12 }]}>Period Number (1 - 12):</Text>
+          <Text style={[modalStyles.label, { marginTop: 14 }]}>
+            Choose Target Period:
+          </Text>
           <View style={modalStyles.periodRow}>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
               <TouchableOpacity
@@ -276,11 +300,27 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
                 style={[
                   modalStyles.periodChip,
                   {
-                    backgroundColor: targetCopyPeriod === num ? theme.colors.primary : theme.colors.secondaryBackground,
+                    backgroundColor:
+                      targetCopyPeriod === num
+                        ? theme.colors.primary
+                        : theme.colors.tertiaryBackground,
+                    borderColor:
+                      targetCopyPeriod === num
+                        ? theme.colors.primary
+                        : theme.colors.border,
+                    borderWidth: 1,
                   },
                 ]}
               >
-                <Text style={{ color: targetCopyPeriod === num ? "#FFF" : "#000", fontWeight: "bold" }}>P{num}</Text>
+                <Text
+                  style={{
+                    color: targetCopyPeriod === num ? "#FFF" : theme.colors.black,
+                    fontFamily: Fonts.semibold,
+                    fontSize: 13,
+                  }}
+                >
+                  Period {num}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -288,68 +328,142 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={_handleCopyAttendance}
-            style={[modalStyles.copyButton, { backgroundColor: theme.colors.primary }]}
+            disabled={copyLoading}
+            style={[
+              modalStyles.copyButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
           >
-            <Text style={modalStyles.copyButtonText}>Copy Statuses</Text>
+            <Text style={modalStyles.copyButtonText}>
+              {copyLoading ? "Checking & Copying..." : "Copy Attendance"}
+            </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Date Calendar Picker Dialog */}
+        {showCalendarPicker && (
+          <Modal
+            transparent
+            animationType="fade"
+            visible={showCalendarPicker}
+            onRequestClose={() => setShowCalendarPicker(false)}
+          >
+            <View style={modalStyles.overlay}>
+              <View style={[modalStyles.card, { backgroundColor: theme.colors.white }]}>
+                <View style={modalStyles.header}>
+                  <Text style={[modalStyles.title, { color: theme.colors.black }]}>
+                    Select Date
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowCalendarPicker(false)}>
+                    <FontAwesome name="times-circle" size={24} color={theme.colors.grey2} />
+                  </TouchableOpacity>
+                </View>
+                <Calendar
+                  current={targetCopyDate}
+                  maxDate={dayjs().format("YYYY-MM-DD")}
+                  onDayPress={(day: any) => {
+                    setTargetCopyDate(day.dateString);
+                    setShowCalendarPicker(false);
+                  }}
+                  markedDates={{
+                    [targetCopyDate]: {
+                      selected: true,
+                      selectedColor: theme.colors.primary,
+                    },
+                  }}
+                  theme={{
+                    selectedDayBackgroundColor: theme.colors.primary,
+                    todayTextColor: theme.colors.primary,
+                    arrowColor: theme.colors.primary,
+                  }}
+                />
+              </View>
+            </View>
+          </Modal>
+        )}
       </View>
     </Modal>
   );
 
-  const _renderAttendance = () => {
+  const _renderHeader = () => (
+    <Header
+      goBack={() => navigation.goBack()}
+      onSave={() => setConfirmVisible(true)}
+    />
+  );
+
+  const _renderBody = () => (
+    <Body
+      statsData={details}
+      markAllPresent={() => _handleMarkAll("present")}
+      markAllAbsent={() => _handleMarkAll("absent")}
+      searchStudents={_handleSearch}
+      openCopyModal={() => setCopyModalVisible(true)}
+    />
+  );
+
+  const _renderContent = () => {
     if (attendanceLoading) {
       return <Loader />;
     }
 
+    if (attendanceError) {
+      return (
+        <NoDataFound
+          title={ATTENDANCE_CONFIG.NoDataFound}
+          buttonTitle={ATTENDANCE_CONFIG.retry}
+          onPress={() =>
+            fetchAttendanceStudents(
+              Number(resolvedCourseBatchId),
+              Number(resolvedPeriodId),
+              date,
+            )
+          }
+        />
+      );
+    }
+
+    if (!students || students.length === 0) {
+      return (
+        <NoDataFound
+          title={ATTENDANCE_CONFIG.NoDataFound}
+          buttonTitle={ATTENDANCE_CONFIG.retry}
+          onPress={() =>
+            fetchAttendanceStudents(
+              Number(resolvedCourseBatchId),
+              Number(resolvedPeriodId),
+              date,
+            )
+          }
+        />
+      );
+    }
+
     return (
       <ScrollView>
-        <Body
-          statsData={details}
-          markAllPresent={markAllPresent}
-          markAllAbsent={markAllAbsent}
-          searchStudents={searchStudents}
-          openCopyModal={() => setCopyModalVisible(true)}
+        <StudentList
+          studentsData={students}
+          onStatusChange={_handleSingleChange}
         />
-
-        {students.length === 0 ? (
-          <NoDataFound
-            title={ATTENDANCE_CONFIG.NoDataFound}
-            buttonTitle={ATTENDANCE_CONFIG.retry}
-            onPress={_retryFetchStudents}
-          />
-        ) : (
-          <StudentList
-            studentsData={students}
-            onStatusChange={_handleStatusChange}
-          />
-        )}
       </ScrollView>
     );
   };
 
   return (
     <>
-      <Header
-        goBack={_navigateToBack}
-        onSave={() => setConfirmVisible(true)}
-      />
-
+      {_renderHeader()}
       <PageContainer isLightStatusBar={true}>
-        {_renderAttendance()}
-      </PageContainer>
+        {_renderBody()}
+        {_renderContent()}
 
-      {_renderCopyModal()}
+        {_renderCopyModal()}
 
-      {confirmVisible && (
         <CustomModal
           visible={confirmVisible}
           setVisible={setConfirmVisible}
           onConfirm={_submitAttendance}
         />
-      )}
-
-      {(submitting || copyLoading) && <Loader useModalLoader />}
+      </PageContainer>
     </>
   );
 };
@@ -387,11 +501,14 @@ const modalStyles = StyleSheet.create({
     color: "#555",
     marginBottom: 6,
   },
-  input: {
+  dateInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "#F9F9F9",
   },
   periodRow: {
     flexDirection: "row",
