@@ -99,4 +99,16 @@ export const AuthApi = {
     const res = await restClient.get(`/filter-attendance-records?${queryStr}`);
     return res.data;
   },
+
+  getNotifications: async (filter?: string) => {
+    let url = "/notifications";
+    if (filter) url += `?filter=${filter}`;
+    const res = await restClient.get(url);
+    return res.data;
+  },
+
+  markNotificationAsRead: async (id: number) => {
+    const res = await restClient.put(`/notifications/${id}/read`);
+    return res.data;
+  },
 };

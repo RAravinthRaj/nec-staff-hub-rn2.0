@@ -86,10 +86,10 @@ class OAHomeService {
         rollNumber: item.registerNumber,
         name: item.studentName,
         status: (item.status || "absent").toLowerCase(),
-        present_days: 0,
-        absent_days: 0,
-        od_days: 0,
-        total_days: 0,
+        present_days: item.present_days ?? 0,
+        absent_days: item.absent_days ?? 0,
+        od_days: item.od_days ?? 0,
+        total_days: item.total_days ?? 1,
       }));
 
       const present_count = students.filter(
@@ -166,3 +166,4 @@ class OAHomeService {
 }
 
 export default OAHomeService.getInstance();
+

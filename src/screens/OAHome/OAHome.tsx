@@ -7,7 +7,7 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 
 import { Loader, NoDataFound, PageContainer } from "@/components";
 import { ScrollView } from "react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Body, Header, StudentList } from "./components";
 import { OA_HOME_CONFIG } from "./config";
 import OAHomeService from "./services";
@@ -88,10 +88,10 @@ export const OAHomeScreen = ({ navigation }: any) => {
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [hasLoadedStudents, setHasLoadedStudents] = useState(false);
-  const [initialStudentsLoadSettled, setInitialStudentsLoadSettled] = useState(false);
+  const [initialStudentsLoadSettled, setInitialStudentsLoadSettled] =
+    useState(false);
 
-  const [summary, setSummary] = useState(INITIAL_SUMMARY);
-  const [pagination, setPagination] = useState(INITIAL_PAGINATION);
+  const isInitialMount = useRef(true);
 
   const selectedPeriod = useMemo(
     () => periods.find((item) => item.id === periodId),
@@ -111,7 +111,17 @@ export const OAHomeScreen = ({ navigation }: any) => {
       page,
       pageSize: 10,
     }),
-    [department, year, startDate, endDate, mode, periodId, statusFilter, search, page],
+    [
+      department,
+      year,
+      startDate,
+      endDate,
+      mode,
+      periodId,
+      statusFilter,
+      search,
+      page,
+    ],
   );
 
   const loadMeta = useCallback(async () => {
@@ -157,9 +167,15 @@ export const OAHomeScreen = ({ navigation }: any) => {
     fetchNotifications("all");
   }, [fetchNotifications, loadMeta]);
 
+  const [summary, setSummary] = useState(INITIAL_SUMMARY);
+  const [pagination, setPagination] = useState(INITIAL_PAGINATION);
+
   const fetchStudents = async (nextPage = page) => {
     if (!isStaff && !year) {
-      showToast(OA_HOME_CONFIG.selectYearError || "Please select a year", "error");
+      showToast(
+        OA_HOME_CONFIG.selectYearError || "Please select a year",
+        "error",
+      );
       return;
     }
 
@@ -216,8 +232,12 @@ export const OAHomeScreen = ({ navigation }: any) => {
   useEffect(() => {
     if (metaLoading) return;
     if (!isStaff && !year) return;
-    fetchStudents(1);
-  }, [metaLoading, year, mode, periodId, isStaff]);
+
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchStudents(1);
+    }
+  }, [metaLoading, year, isStaff]);
 
   const _navigateToNotification = () => navigation.navigate("Notification");
 
@@ -292,8 +312,13 @@ export const OAHomeScreen = ({ navigation }: any) => {
 
     try {
       setSaveLoading(true);
-      const res = await OAHomeService.saveAttendanceAPI(filterPayload, payloadStudents);
-      const affectedStudents = Number(res?.payload?.affected_students ?? payloadStudents.length);
+      const res = await OAHomeService.saveAttendanceAPI(
+        filterPayload,
+        payloadStudents,
+      );
+      const affectedStudents = Number(
+        res?.payload?.affected_students ?? payloadStudents.length,
+      );
       const affectedDates = Number(res?.payload?.affected_dates ?? 1);
       showToast(
         OA_HOME_CONFIG.saveAttendanceSuccess
@@ -342,10 +367,6 @@ export const OAHomeScreen = ({ navigation }: any) => {
 
   const renderContent = () => {
     if (metaLoading) {
-      return <Loader />;
-    }
-
-    if (!initialStudentsLoadSettled && year) {
       return <Loader />;
     }
 
@@ -402,6 +423,9 @@ export const OAHomeScreen = ({ navigation }: any) => {
         showBadge={unreadCount > 0}
       />
       <PageContainer isLightStatusBar={true}>{renderContent()}</PageContainer>
+
+      {/* Modal Loader from components when fetching students or saving attendance */}
+      {(studentsLoading || saveLoading) && <Loader useModalLoader={true} />}
     </>
   );
 };

@@ -8,16 +8,26 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 import { PageContainer, Loader } from "@/components";
 import { Body, Header, Schedules } from "./components";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ScrollView } from "react-native";
-import { showToast } from "@/utils";
 import { AuthApi } from "@/services/authApi";
+import { useFocusEffect } from "@react-navigation/native";
+import { useNotificationStore } from "../Notification/stores";
 
 export const HomeScreen = ({ navigation }: any) => {
   const today = dayjs().format("YYYY-MM-DD");
   const [date, setDate] = useState(today);
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications("all");
+    }, [fetchNotifications])
+  );
 
   const fetchTimetable = async (selectedDate: string) => {
     const d = dayjs(selectedDate);
@@ -82,7 +92,7 @@ export const HomeScreen = ({ navigation }: any) => {
     <>
       <Header
         navigateToNotification={_navigateToNotification}
-        showBadge={false}
+        showBadge={unreadCount > 0}
       />
       <Body setDate={setDate} />
       <PageContainer isLightStatusBar={true}>

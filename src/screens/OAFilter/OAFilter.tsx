@@ -14,7 +14,8 @@ import {
   TouchableOpacity,
   View,
   Image,
-  FlatList,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import ElevatedView from "react-native-elevated-view";
 import { Icon, useTheme } from "@rneui/themed";
@@ -23,6 +24,7 @@ import { Header, DropDown, DateInput, StudentList } from "../OAHome/components";
 import { OA_HOME_CONFIG } from "../OAHome/config";
 import OAHomeService from "../OAHome/services";
 import { showToast } from "@/utils";
+import { useNotificationStore } from "../Notification/stores";
 import { Fonts, Images } from "@/assets";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -47,114 +49,106 @@ interface StudentRow {
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    paddingHorizontal: 16,
-    paddingTop: 10,
+    padding: 16,
   },
   filtersCard: {
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 16,
-    gap: 14,
+    marginBottom: 16,
   },
   row: {
     flexDirection: "row",
     gap: 12,
+    marginBottom: 14,
   },
   field: {
     flex: 1,
+    marginBottom: 14,
   },
   titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
     marginBottom: 6,
   },
   titleText: {
-    fontSize: 16,
+    fontSize: 13,
     fontFamily: Fonts.semibold,
-    lineHeight: 22,
   },
   searchInput: {
-    borderWidth: 0.5,
-    width: "100%",
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    fontSize: 15,
+    borderWidth: 1,
     borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   actionRow: {
     flexDirection: "row",
     gap: 12,
-  },
-  primaryButton: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 14,
-    borderRadius: 12,
+    marginTop: 8,
   },
   secondaryButton: {
     flex: 1,
-    alignItems: "center",
-    paddingVertical: 14,
+    borderWidth: 1,
     borderRadius: 12,
-    borderWidth: 1.5,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryButton: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: Fonts.semibold,
   },
-  statsContainer: {
-    width: "100%",
-    paddingHorizontal: 5,
-    marginTop: 18,
-  },
-  imageContainer: {
-    display: "flex",
+  statsRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  image: {
-    height: 28,
-    width: 28,
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 16,
   },
   statCard: {
-    flex: 1,
-    display: "flex",
+    width: "48%",
+    borderRadius: 14,
+    padding: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    padding: 10,
-    borderRadius: 10,
-    margin: 5,
+  },
+  imageContainer: {
+    width: 38,
+    height: 38,
+    marginRight: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  image: {
+    width: 32,
+    height: 32,
+    resizeMode: "contain",
   },
   detailContainer: {
-    display: "flex",
-    flexDirection: "column",
+    flex: 1,
   },
   statValue: {
-    fontSize: 25,
-    letterSpacing: 0.4,
+    fontSize: 18,
     fontFamily: Fonts.bold,
   },
   statLabel: {
     fontSize: 13,
     fontFamily: Fonts.semibold,
   },
+  paginationContainer: {
+    marginTop: 16,
+    marginBottom: 24,
+    paddingHorizontal: 16,
+  },
   paginationRow: {
-    width: "100%",
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 14,
-    marginBottom: 18,
-  },
-  paginationText: {
-    fontSize: 14,
-    fontFamily: Fonts.semibold,
-  },
-  paginationButtons: {
-    flexDirection: "row",
-    gap: 10,
+    justifyContent: "space-between",
   },
   paginationButton: {
     paddingVertical: 10,
@@ -165,6 +159,16 @@ const styles = StyleSheet.create({
   paginationButtonText: {
     fontSize: 14,
     fontFamily: Fonts.regular,
+  },
+  pageChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginHorizontal: 3,
+    minWidth: 36,
+    alignItems: "center",
+    justifyContent: "center",
   },
   tableHeader: {
     flexDirection: "row",
@@ -182,10 +186,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tableHeaderText: {
-    fontSize: 15,
-    color: "white",
+    color: "#FFFFFF",
     fontFamily: Fonts.semibold,
-    textAlign: "center",
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCard: {
+    width: "80%",
+    padding: 24,
+    borderRadius: 16,
+    alignItems: "center",
+    elevation: 8,
   },
 });
 
@@ -241,8 +257,6 @@ export const OAFilterScreen = ({ navigation }: any) => {
   const [metaLoading, setMetaLoading] = useState(true);
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [hasLoadedStudents, setHasLoadedStudents] = useState(false);
-  const [initialStudentsLoadSettled, setInitialStudentsLoadSettled] = useState(false);
   const [summary, setSummary] = useState({
     totalStudents: 0,
     present: 0,
@@ -276,21 +290,6 @@ export const OAFilterScreen = ({ navigation }: any) => {
     try {
       setMetaLoading(true);
       setStudents([]);
-      setSummary({
-        totalStudents: 0,
-        present: 0,
-        absent: 0,
-        onDuty: 0,
-        mixed: 0,
-      });
-      setPagination({
-        page: 1,
-        pageSize: 10,
-        totalCount: 0,
-        totalPages: 0,
-      });
-      setHasLoadedStudents(false);
-      setInitialStudentsLoadSettled(false);
 
       const res = await OAHomeService.getMetaAPI();
       const payload = res?.payload;
@@ -322,7 +321,10 @@ export const OAFilterScreen = ({ navigation }: any) => {
 
   const fetchStudents = async (nextPage = page) => {
     if (!year) {
-      showToast(OA_HOME_CONFIG.selectYearError || "Please select a year", "error");
+      showToast(
+        OA_HOME_CONFIG.selectYearError || "Please select a year",
+        "error",
+      );
       return;
     }
 
@@ -358,22 +360,18 @@ export const OAFilterScreen = ({ navigation }: any) => {
         page: Number(payload?.pagination?.page ?? nextPage),
         pageSize: Number(payload?.pagination?.page_size ?? 10),
         totalCount: Number(payload?.pagination?.total_count ?? 0),
-        totalPages: Number(payload?.pagination?.total_pages ?? 0),
+        totalPages: Number(
+          payload?.pagination?.total_pages ??
+            Math.ceil((payload?.pagination?.total_count ?? 0) / 10),
+        ),
       });
       setPage(Number(payload?.pagination?.page ?? nextPage));
-      setHasLoadedStudents(true);
     } catch (err: any) {
       showToast(err?.message || OA_HOME_CONFIG.fetchStudentsError, "error");
     } finally {
-      setInitialStudentsLoadSettled(true);
       setStudentsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (metaLoading || !year) return;
-    fetchStudents(1);
-  }, [metaLoading, year, mode]);
 
   const handleExport = async () => {
     try {
@@ -396,7 +394,9 @@ export const OAFilterScreen = ({ navigation }: any) => {
 
   const renderFieldTitle = (title: string) => (
     <View style={styles.titleRow}>
-      <Text style={[styles.titleText, { color: theme.colors.black }]}>{title}</Text>
+      <Text style={[styles.titleText, { color: theme.colors.black }]}>
+        {title}
+      </Text>
     </View>
   );
 
@@ -447,7 +447,7 @@ export const OAFilterScreen = ({ navigation }: any) => {
       </View>
       <View style={styles.detailContainer}>
         <Text style={[styles.statValue, { color: theme.colors.white }]}>
-          {statsData[item.image]}
+          {statsData[item.image as keyof typeof statsData] ?? 0}
         </Text>
         <Text style={[styles.statLabel, { color: theme.colors.white }]}>
           {item.description}
@@ -457,45 +457,104 @@ export const OAFilterScreen = ({ navigation }: any) => {
   );
 
   const renderStats = () => (
-    <FlatList
-      data={OA_STATISTICS_CARDS}
-      keyExtractor={(_, index) => index.toString()}
-      numColumns={2}
-      renderItem={renderStatCard}
-      columnWrapperStyle={{ gap: 5 }}
-      contentContainerStyle={styles.statsContainer}
-      showsVerticalScrollIndicator={false}
-      scrollEnabled={false}
-    />
-  );
-
-  const renderPagination = () => (
-    <View style={styles.paginationRow}>
-      <Text style={[styles.paginationText, { color: theme.colors.black }]}>
-        {OA_HOME_CONFIG.page} {pagination.page} / {Math.max(pagination.totalPages, 1)}
-      </Text>
-
-      <View style={styles.paginationButtons}>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => pagination.page > 1 && fetchStudents(pagination.page - 1)}
-          style={[styles.paginationButton, { borderColor: colors.border }]}
-        >
-          <Text style={styles.paginationButtonText}>{OA_HOME_CONFIG.previous}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() =>
-            pagination.page < pagination.totalPages && fetchStudents(pagination.page + 1)
-          }
-          style={[styles.paginationButton, { borderColor: colors.border }]}
-        >
-          <Text style={styles.paginationButtonText}>{OA_HOME_CONFIG.next}</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.statsRow}>
+      {OA_STATISTICS_CARDS.map((item) => (
+        <React.Fragment key={item.image}>
+          {renderStatCard({ item })}
+        </React.Fragment>
+      ))}
     </View>
   );
+
+  const renderPagination = () => {
+    const totalPages = Math.max(
+      pagination.totalPages || Math.ceil(pagination.totalCount / 10),
+      1,
+    );
+    const pagesArray = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+    return (
+      <View style={styles.paginationContainer}>
+        <View style={styles.paginationRow}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            disabled={pagination.page <= 1}
+            onPress={() =>
+              pagination.page > 1 && fetchStudents(pagination.page - 1)
+            }
+            style={[
+              styles.paginationButton,
+              {
+                borderColor: colors.border,
+                opacity: pagination.page <= 1 ? 0.4 : 1,
+              },
+            ]}
+          >
+            <Text style={styles.paginationButtonText}>
+              {OA_HOME_CONFIG.previous}
+            </Text>
+          </TouchableOpacity>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginHorizontal: 6, flexGrow: 0 }}
+          >
+            {pagesArray.map((pageNum) => (
+              <TouchableOpacity
+                key={pageNum}
+                activeOpacity={0.8}
+                onPress={() => fetchStudents(pageNum)}
+                style={[
+                  styles.pageChip,
+                  {
+                    backgroundColor:
+                      pagination.page === pageNum
+                        ? theme.colors.primary
+                        : theme.colors.tertiaryBackground,
+                    borderColor:
+                      pagination.page === pageNum
+                        ? theme.colors.primary
+                        : theme.colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color:
+                      pagination.page === pageNum ? "#FFF" : theme.colors.black,
+                    fontFamily: Fonts.semibold,
+                    fontSize: 13,
+                  }}
+                >
+                  {pageNum}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            disabled={pagination.page >= totalPages}
+            onPress={() =>
+              pagination.page < totalPages && fetchStudents(pagination.page + 1)
+            }
+            style={[
+              styles.paginationButton,
+              {
+                borderColor: colors.border,
+                opacity: pagination.page >= totalPages ? 0.4 : 1,
+              },
+            ]}
+          >
+            <Text style={styles.paginationButtonText}>
+              {OA_HOME_CONFIG.next}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
 
   const renderTableHeader = () => (
     <View
@@ -527,10 +586,15 @@ export const OAFilterScreen = ({ navigation }: any) => {
       style={[styles.filtersCard, { backgroundColor: theme.colors.white }]}
     >
       <View style={styles.row}>
-        {renderDropdownField(OA_HOME_CONFIG.mode, mode, REPORT_MODES, (value) => {
-          setMode(value as AttendanceMode);
-          setPage(1);
-        })}
+        {renderDropdownField(
+          OA_HOME_CONFIG.mode,
+          mode,
+          REPORT_MODES,
+          (value) => {
+            setMode(value as AttendanceMode);
+            setPage(1);
+          },
+        )}
       </View>
 
       {useAuthStore.getState().user?.role === "STAFF" ? (
@@ -599,7 +663,7 @@ export const OAFilterScreen = ({ navigation }: any) => {
           }}
         >
           <Text style={[styles.buttonText, { color: colors.primary }]}>
-            {studentsLoading ? OA_HOME_CONFIG.loading : OA_HOME_CONFIG.applyButtonTitle}
+            {OA_HOME_CONFIG.applyButtonTitle}
           </Text>
         </TouchableOpacity>
 
@@ -637,16 +701,13 @@ export const OAFilterScreen = ({ navigation }: any) => {
       <>
         {renderTableHeader()}
         <StudentList studentsData={students} mode={mode} editable={false} />
+        {renderPagination()}
       </>
     );
   };
 
   const renderContent = () => {
     if (metaLoading) {
-      return <Loader />;
-    }
-
-    if (!initialStudentsLoadSettled && department && year) {
       return <Loader />;
     }
 
@@ -659,17 +720,24 @@ export const OAFilterScreen = ({ navigation }: any) => {
         <View style={styles.container}>
           {renderFilterPanel()}
           {renderStats()}
-          {renderPagination()}
         </View>
         {renderStudentSection()}
       </ScrollView>
     );
   };
 
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+
   return (
     <>
-      <Header navigateToNotification={navigateToNotification} showBadge={false} />
+      <Header
+        navigateToNotification={navigateToNotification}
+        showBadge={unreadCount > 0}
+      />
       <PageContainer isLightStatusBar={true}>{renderContent()}</PageContainer>
+
+      {/* Apply Filters Modal Loader */}
+      {studentsLoading && <Loader useModalLoader={true} />}
     </>
   );
 };
