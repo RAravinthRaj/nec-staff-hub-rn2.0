@@ -257,6 +257,7 @@ export const OAFilterScreen = ({ navigation }: any) => {
   const [metaLoading, setMetaLoading] = useState(true);
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [hasLoadedStudents, setHasLoadedStudents] = useState(false);
   const [summary, setSummary] = useState({
     totalStudents: 0,
     present: 0,
@@ -366,6 +367,7 @@ export const OAFilterScreen = ({ navigation }: any) => {
         ),
       });
       setPage(Number(payload?.pagination?.page ?? nextPage));
+      setHasLoadedStudents(true);
     } catch (err: any) {
       showToast(err?.message || OA_HOME_CONFIG.fetchStudentsError, "error");
     } finally {

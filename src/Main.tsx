@@ -6,6 +6,7 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
 import { StyleSheet } from "react-native";
 import { FontFamily, ImagesCache } from "@/assets";
@@ -51,10 +52,12 @@ export const Main = () => {
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <AppNavigator />
-      <Toast config={toastConfig} position="top" topOffset={60} />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider theme={theme}>
+        <AppNavigator />
+        <Toast config={toastConfig} position="top" topOffset={60} />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 };
 

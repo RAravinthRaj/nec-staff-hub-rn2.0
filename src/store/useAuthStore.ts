@@ -40,6 +40,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   loginSuccess: async (token: string, user: UserProfile) => {
     try {
       await SecureStore.setItemAsync("userToken", token);
+      await SecureStore.setItemAsync("token", token);
       await SecureStore.setItemAsync("userData", JSON.stringify(user));
     } catch (err) {
       console.warn("Error writing to SecureStore", err);
@@ -50,7 +51,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     try {
       await SecureStore.deleteItemAsync("userToken");
+      await SecureStore.deleteItemAsync("token");
       await SecureStore.deleteItemAsync("userData");
+      await SecureStore.deleteItemAsync("role");
+      await SecureStore.deleteItemAsync("signInToken");
     } catch (err) {
       console.warn("Error clearing SecureStore", err);
     }
@@ -59,7 +63,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   checkAuthSession: async () => {
     try {
-      const storedToken = await SecureStore.getItemAsync("userToken");
+      const storedToken =
+        (await SecureStore.getItemAsync("userToken")) ||
+        (await SecureStore.getItemAsync("token"));
       const storedUserData = await SecureStore.getItemAsync("userData");
 
       if (storedToken && storedUserData) {

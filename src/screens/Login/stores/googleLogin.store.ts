@@ -34,6 +34,7 @@ export const useGoogleLoginStore = create<GoogleLoginState>((set) => ({
       const res = await googleLoginAPI({ email });
 
       await SecureStore.setItemAsync("token", res.token);
+      await SecureStore.setItemAsync("userToken", res.token);
       await SecureStore.setItemAsync("role", res.role);
 
       return res;

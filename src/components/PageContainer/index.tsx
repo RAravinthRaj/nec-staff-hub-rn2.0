@@ -41,7 +41,7 @@ export const PageContainer = ({
   }, []);
 
   return (
-    <SafeAreaProvider>
+    <>
       <StatusBar style={isLightStatusBar ? "light" : "dark"} />
       <View style={{ flex: 1, backgroundColor: theme.colors.white }}>
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.white }}>
@@ -54,6 +54,6 @@ export const PageContainer = ({
           </KeyboardAvoidingView>
         </SafeAreaView>
       </View>
-    </SafeAreaProvider>
+    </>
   );
 };
