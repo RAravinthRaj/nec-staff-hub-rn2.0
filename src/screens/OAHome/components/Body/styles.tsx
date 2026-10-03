@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
   container: {
     width: "100%",
     paddingHorizontal: 10,
-    paddingTop: 10,
+    paddingTop: 4,
   },
   headerContainer: {
     paddingHorizontal: 5,

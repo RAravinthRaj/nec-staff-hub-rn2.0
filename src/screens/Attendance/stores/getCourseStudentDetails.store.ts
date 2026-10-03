@@ -30,7 +30,8 @@ export interface AttendanceState {
   attendanceError: string | null;
 
   fetchAttendanceStudents: (
-    courseBatchId: number,
+    courseId: number,
+    sectionId: number,
     periodId: number,
     date: string,
   ) => Promise<void>;
@@ -45,7 +46,8 @@ export const useAttendanceStore = create<AttendanceState>((set) => ({
   attendanceError: null,
 
   fetchAttendanceStudents: async (
-    courseBatchId: number,
+    courseId: number,
+    sectionId: number,
     periodId: number,
     date: string,
   ) => {
@@ -56,7 +58,8 @@ export const useAttendanceStore = create<AttendanceState>((set) => ({
 
     try {
       const res = await AttendanceService.getCourseStudentsDetailsAPI(
-        courseBatchId,
+        courseId,
+        sectionId,
         periodId,
         date,
       );

@@ -20,7 +20,13 @@ export const Body = ({ data }: IBody) => {
   const [imageError, setImageError] = useState(false);
 
   const photoUri = data?.profilePhoto || data?.profile_image;
-  const hasCustomPhoto = photoUri && typeof photoUri === "string" && photoUri.length > 0 && !imageError;
+  const hasCustomPhoto =
+    photoUri &&
+    typeof photoUri === "string" &&
+    photoUri.trim().length > 0 &&
+    photoUri.trim() !== "null" &&
+    photoUri.trim() !== "undefined" &&
+    !imageError;
 
   const _renderLogo = () => {
     return (
@@ -29,6 +35,7 @@ export const Body = ({ data }: IBody) => {
           source={hasCustomPhoto ? { uri: photoUri } : Images.profile}
           onError={() => setImageError(true)}
           style={StyleSheet.flatten([S.profileImage])}
+          resizeMode="cover"
         />
       </View>
     );

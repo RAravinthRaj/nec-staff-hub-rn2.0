@@ -20,7 +20,7 @@ import isBetween from "dayjs/plugin/isBetween";
 export interface IAccordian {
   data: any;
   date: string;
-  navigateToAttendance: (courseBatchId: number, periodId: number) => void;
+  navigateToAttendance: (courseBatchId: number, periodId: number, item?: any) => void;
 }
 
 dayjs.extend(isBetween);
@@ -185,7 +185,7 @@ export const Accordion = ({ data, date, navigateToAttendance }: IAccordian) => {
           ])}
           activeOpacity={0.8}
           onPress={() => {
-            navigateToAttendance(Number(courseBatchId), Number(periodId));
+            navigateToAttendance(Number(courseBatchId), Number(periodId), data);
           }}
         >
           <Text

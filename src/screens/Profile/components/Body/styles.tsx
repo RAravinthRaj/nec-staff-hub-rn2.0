@@ -27,8 +27,9 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
   profileImage: {
-    width: ScreenWidth * 0.235,
-    height: ScreenHeight * 0.11,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     margin: 10,
   },
   textContainer: {

@@ -57,9 +57,9 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const _navigateToAttendance = (courseBatchId: number, periodId: number, item?: any) => {
     navigation.navigate("Attendance", {
-      courseBatchId: courseBatchId || item?.id || 1,
-      periodId: periodId || item?.periodId || 1,
-      courseId: item?.courseId || 1,
+      courseBatchId: item?.courseBatchId || courseBatchId || 1,
+      periodId: item?.periodId || periodId || 1,
+      courseId: item?.courseId || courseBatchId || 1,
       sectionId: item?.sectionId || 1,
       course_batch_id: courseBatchId,
       period_id: periodId,
@@ -77,14 +77,12 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const _renderSchedules = () => {
     return (
-      <ScrollView>
-        <Schedules
-          date={date}
-          data={schedules}
-          navigateToAttendance={_navigateToAttendance}
-          retryFetchStudents={_retryFetchSchedules}
-        />
-      </ScrollView>
+      <Schedules
+        date={date}
+        data={schedules}
+        navigateToAttendance={_navigateToAttendance}
+        retryFetchStudents={_retryFetchSchedules}
+      />
     );
   };
 

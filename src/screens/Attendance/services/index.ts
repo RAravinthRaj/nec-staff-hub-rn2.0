@@ -20,13 +20,14 @@ class AttendanceService {
   }
 
   async getCourseStudentsDetailsAPI(
-    course_batch_id: number,
+    courseId: number,
+    sectionId: number,
     period_id: number,
     date: string,
   ): Promise<any> {
     try {
       const formattedDate = date ? (date.includes(".") ? date.split(".").reverse().join("-") : date) : undefined;
-      const res = await AuthApi.getStudentsForAttendance(course_batch_id, 1, formattedDate, period_id);
+      const res = await AuthApi.getStudentsForAttendance(courseId, sectionId || 1, formattedDate, period_id);
       const fetchedStudents = res?.students || [];
 
       const students = fetchedStudents.map((s: any) => ({
@@ -41,7 +42,7 @@ class AttendanceService {
       const odCount = students.filter((s: any) => s.status === "od" || s.status === "onduty").length;
 
       return {
-        course_batch_id,
+        courseId,
         period_id,
         date,
         total_students: students.length,
@@ -52,7 +53,7 @@ class AttendanceService {
       };
     } catch (error: any) {
       return {
-        course_batch_id,
+        courseId,
         period_id,
         date,
         total_students: 0,

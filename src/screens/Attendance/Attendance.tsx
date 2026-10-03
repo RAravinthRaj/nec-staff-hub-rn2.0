@@ -40,7 +40,7 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
 
   const resolvedCourseBatchId = course_batch_id ?? legacyCourseBatchId ?? 1;
   const resolvedPeriodId = period_id ?? legacyPeriodId ?? 1;
-  const resolvedCourseId = legacyCourseId ?? resolvedCourseBatchId ?? 1;
+  const resolvedCourseId = legacyCourseId ?? course_batch_id ?? legacyCourseBatchId ?? 1;
   const resolvedSectionId = legacySectionId ?? 1;
 
   const {
@@ -72,15 +72,16 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
   });
 
   useEffect(() => {
-    if (!resolvedCourseBatchId || !date) return;
+    if (!resolvedCourseId || !date) return;
 
     resetAttendance();
     fetchAttendanceStudents(
-      Number(resolvedCourseBatchId),
+      Number(resolvedCourseId),
+      Number(resolvedSectionId),
       Number(resolvedPeriodId),
       date,
     );
-  }, []);
+  }, [resolvedCourseId, resolvedSectionId, resolvedPeriodId, date]);
 
   useEffect(() => {
     if (attendance) {
@@ -414,7 +415,8 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
           buttonTitle={ATTENDANCE_CONFIG.retry}
           onPress={() =>
             fetchAttendanceStudents(
-              Number(resolvedCourseBatchId),
+              Number(resolvedCourseId),
+              Number(resolvedSectionId),
               Number(resolvedPeriodId),
               date,
             )
@@ -430,7 +432,8 @@ export const AttendanceScreen = ({ navigation, route }: any) => {
           buttonTitle={ATTENDANCE_CONFIG.retry}
           onPress={() =>
             fetchAttendanceStudents(
-              Number(resolvedCourseBatchId),
+              Number(resolvedCourseId),
+              Number(resolvedSectionId),
               Number(resolvedPeriodId),
               date,
             )
